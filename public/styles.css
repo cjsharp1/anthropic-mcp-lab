@@ -32,6 +32,24 @@
   --warn: #d9b45f;
   --bad: #d98a7f;
 
+  /* ---- Log colours -------------------------------------------------------
+
+     Taken from the chat lab's activity log, values and names unchanged,
+     so a reader moving between the two panels does not have to relearn
+     what a colour means. Green is a call to a service, amber is a
+     function running locally, blue-grey is internal, red is a failure.
+
+     The names keep that project's vocabulary even where this project's
+     vocabulary differs: --level-api is used for the `mcp` level, because
+     the two occupy the same slot — the protocol exchange that is the
+     panel's reason to exist. Renaming it to --level-mcp here would make
+     the two stylesheets diff as different when they are the same. */
+  --level-info: #8fa3b8;
+  --level-api: #72b894;
+  --level-tool: #d4a356;
+  --level-warn: #d9b45f;
+  --level-error: #e07878;
+
   --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
@@ -55,6 +73,15 @@
     --good: #4a6b48;
     --warn: #8a6410;
     --bad: #a24a3a;
+
+    /* The chat lab's light-mode log colours, same as above. Darker and
+       more saturated than their dark-mode counterparts: a tint that
+       reads clearly against #16150f disappears against white. */
+    --level-info: #5b6b7c;
+    --level-api: #2f6b4f;
+    --level-tool: #8a5a12;
+    --level-warn: #8a6410;
+    --level-error: #a32b2b;
 
     color-scheme: light;
   }
@@ -225,11 +252,73 @@ h2 {
   font-size: 0.74rem;
 }
 
+/* ---- Row colour: two independent signals -------------------------------
+
+   The chat lab's scheme, carried over because it works and because the
+   two panels should read the same way.
+
+   DIRECTION tints the row and colours its left edge and arrow: which
+   way did this travel. LEVEL colours the tag only: what kind of thing
+   was it. Keeping them independent is what lets an error stay red
+   whichever way it was going — if direction owned the tag as well,
+   a failed inbound request would be indistinguishable from a
+   successful one at a glance.
+
+   The direction vocabulary is mirrored relative to the chat lab, and
+   the colours mirror with it. There, "out" meant a request leaving for
+   Anthropic and got the green service colour. Here this process is the
+   one being called, so "in" is the request arriving and takes green.
+   The colour follows the meaning — a protocol exchange with the outside
+   world — not the word. */
+
 .row {
   padding: 0.25rem 1rem;
   border-bottom: 1px solid var(--rule);
+  border-left: 3px solid transparent;
 }
 .row.hidden { display: none; }
+
+/* Inbound — a request arriving from a client. The exchange with the
+   outside world, so it takes the colour the chat lab gives an API
+   call. */
+.row.dir-in {
+  border-left-color: var(--level-api);
+  background: color-mix(in srgb, var(--level-api) 10%, transparent);
+}
+.dir-in .row-arrow { color: var(--level-api); }
+
+/* Outbound — our answer going back. Same exchange, cooler, so a
+   request and its response are distinguishable without reading. */
+.row.dir-out {
+  border-left-color: var(--level-info);
+  background: color-mix(in srgb, var(--level-info) 12%, transparent);
+}
+.dir-out .row-arrow { color: var(--level-info); }
+
+/* A handler running. Indented, because it happens inside the exchange
+   that asked for it rather than alongside it. */
+.row.dir-call {
+  border-left-color: var(--level-tool);
+  background: color-mix(in srgb, var(--level-tool) 9%, transparent);
+  padding-left: 1.6rem;
+}
+.dir-call .row-arrow { color: var(--level-tool); }
+
+/* Its return value. Indented to match, slightly stronger so the pair
+   reads as call-then-return. */
+.row.dir-back {
+  border-left-color: var(--level-tool);
+  background: color-mix(in srgb, var(--level-tool) 16%, transparent);
+  padding-left: 1.6rem;
+}
+.dir-back .row-arrow { color: var(--level-tool); }
+
+/* Internal notes recede: no tint, faded marker. They are context, not
+   part of any exchange. */
+.row.dir-none {
+  border-left-color: color-mix(in srgb, var(--fg-dim) 35%, transparent);
+}
+.dir-none .row-arrow { color: var(--fg-dim); opacity: 0.5; }
 
 .row-head {
   display: flex;
@@ -249,11 +338,17 @@ h2 {
   border: 1px solid currentColor;
   opacity: 0.85;
 }
-.tag-mcp     { color: var(--accent); }
-.tag-handler { color: var(--good); }
-.tag-info    { color: var(--fg-faint); }
-.tag-warn    { color: var(--warn); }
-.tag-error   { color: var(--bad); }
+/* Level: the secondary signal, carried by the tag alone.
+
+   `mcp` takes --level-api and `handler` takes --level-tool, which is
+   the same mapping the chat lab uses for the same two ideas: a
+   protocol exchange with something outside this process, and a
+   function running inside it. */
+.tag-mcp     { color: var(--level-api); }
+.tag-handler { color: var(--level-tool); }
+.tag-info    { color: var(--level-info); }
+.tag-warn    { color: var(--level-warn); }
+.tag-error   { color: var(--level-error); }
 
 .row-transport {
   flex: none;
@@ -290,8 +385,24 @@ h2 {
 }
 .row-detail > summary:hover { color: var(--accent); }
 
-.level-error { background: color-mix(in srgb, var(--bad) 8%, transparent); }
-.level-warn  { background: color-mix(in srgb, var(--warn) 7%, transparent); }
+/* Failures override the direction tint rather than blending with it.
+
+   A warning or an error is the thing you are scanning for, and a red
+   row that is also a "back" row should read as red, not as a slightly
+   warmer amber. These rules come after the direction rules above and
+   match with equal specificity (one class each), so source order
+   decides — which is why they sit here and not higher up the file.
+
+   Everything else keeps its direction tint. Only these two levels are
+   urgent enough to take the row. */
+.row.level-warn {
+  border-left-color: var(--level-warn);
+  background: color-mix(in srgb, var(--level-warn) 12%, transparent);
+}
+.row.level-error {
+  border-left-color: var(--level-error);
+  background: color-mix(in srgb, var(--level-error) 14%, transparent);
+}
 
 /* ---- The JSON tree ----
 

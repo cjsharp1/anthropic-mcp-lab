@@ -160,7 +160,18 @@ export function appendEvent(event: InspectorEvent): void {
   if (!panel) return;
 
   const row = document.createElement("div");
-  row.className = `row level-${event.level}`;
+
+  // Two classes carrying two independent signals — see the colour
+  // section of styles.css. `dir-*` tints the row and colours its left
+  // edge; `level-*` colours the tag, and for warn and error also takes
+  // over the row, because a failure matters more than which way it was
+  // travelling.
+  //
+  // An absent direction is "none" rather than nothing, so that an
+  // internal note gets the faded treatment instead of falling through
+  // to an untinted row that looks like a styling bug.
+  row.className = `row level-${event.level} dir-${event.direction ?? "none"}`;
+
   if (!isVisible(event)) row.classList.add("hidden");
 
   // --- The always-visible line ---------------------------------------------

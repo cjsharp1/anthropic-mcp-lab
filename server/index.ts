@@ -172,11 +172,13 @@ app.all("/mcp", (req, res) => {
   if (!validateHost(req, res)) return;
   if (!validateOrigin(req, res)) return;
 
+  const startedAt = Date.now();
+
   // Logged before the handler runs, so the row exists even if the
   // request turns out to be malformed. This is the "in" half of the
   // pairing the project's conventions require; the handler hooks
-  // supply what happens in between, and the response leaves when the
-  // handler resolves.
+  // supply what happens in between, and the "out" half is logged on
+  // the response's own finish event below.
   observer.log.mcp(`${req.method} /mcp`, {
     method: req.method,
     headers: {
@@ -188,6 +190,39 @@ app.all("/mcp", (req, res) => {
       "mcp-protocol-version": req.headers["mcp-protocol-version"],
     },
   }, { direction: "in", transport: "http" });
+
+  // The "out" half of the pairing.
+  //
+  // Hooked to the response's own "finish" event rather than awaiting
+  // the handler, because an SSE response does not resolve when the
+  // first bytes go out — it stays open for the stream. "finish" fires
+  // when the body is actually complete, which is the moment the
+  // exchange is over for either response mode.
+  //
+  // Registered before the handler runs. An exchange that fails
+  // synchronously still emits "finish", so the pair is never left
+  // half-open; registering afterwards would race a fast response.
+  res.on("finish", () => {
+    const elapsedMs = Date.now() - startedAt;
+
+    // The status code is the honest summary of what left. An MCP
+    // error is usually a 200 carrying a JSON-RPC error body — the
+    // protocol's failures are in-band — so a 200 here does not
+    // promise the client got what it asked for, only that the
+    // exchange completed.
+    observer.log.mcp(
+      `${res.statusCode} ${req.method} /mcp`,
+      {
+        status: res.statusCode,
+        content_type: res.getHeader("content-type"),
+        note:
+          "An MCP error is usually a 200 with a JSON-RPC error in the " +
+          "body — the protocol carries its failures in-band. A 200 " +
+          "means the exchange completed, not that it succeeded.",
+      },
+      { direction: "out", transport: "http", elapsedMs },
+    );
+  });
 
   // No await and no next(). The adapter owns the response from here;
   // a floating promise is correct, and passing Express's `next` would
