@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Lab — inspector</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!--
+  The inspector.
+
+  Two panes: the traffic log on the left, what the server exposes on
+  the right. The log is the subject; the surface panel is the
+  reference you need while driving the server from somewhere else.
+
+  Everything here is static. The rows, the filter checkboxes and the
+  surface entries are all built by app.ts at runtime — which is why
+  the filter rows below are empty containers rather than hand-written
+  checkboxes. Writing them here would mean the list of levels existed
+  in two places, and the one in shared/types.ts is the real one.
+-->
+
+<header class="top">
+  <div class="title">
+    <h1>MCP Lab</h1>
+    <span id="server-identity" class="identity">connecting…</span>
+  </div>
+
+  <div class="status">
+    <span id="connection" class="connection">connecting…</span>
+    <span class="endpoint">POST /mcp</span>
+  </div>
+</header>
+
+<main>
+
+  <section class="pane pane-log">
+    <div class="pane-head">
+      <h2>Traffic</h2>
+      <span id="log-count" class="count">0 events</span>
+      <button id="clear" type="button" class="clear">Clear</button>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <span class="filter-label">level</span>
+        <div id="level-filters" class="filter-row"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">transport</span>
+        <div id="transport-filters" class="filter-row"></div>
+      </div>
+    </div>
+
+    <div id="log" class="log" role="log" aria-live="polite"></div>
+  </section>
+
+  <section class="pane pane-surface">
+    <div class="pane-head">
+      <h2>What this server exposes</h2>
+    </div>
+
+    <div class="hint">
+      <p>Drive it from a client and watch the log fill. Over HTTP:</p>
+      <code>npm run try-http</code>
+      <p>Or over stdio, which this page cannot see — a stdio server is a child process of whoever launched it:</p>
+      <code>npm run try-stdio</code>
+    </div>
+
+    <div id="surface" class="surface"></div>
+  </section>
+
+</main>
+
+<!--
+  type="module" is required: app.ts compiles to an ES module and uses
+  import. Without it the browser treats the file as a classic script
+  and fails on the first import statement.
+
+  The .js extension is correct even though the source is .ts — the
+  browser loads the compiled output, which sits beside the source in
+  this directory. See tsconfig.client.json for why it compiles in
+  place rather than into dist/.
+-->
+<script type="module" src="app.js"></script>
+
+</body>
+</html>

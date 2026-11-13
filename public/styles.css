@@ -1,0 +1,488 @@
+/* ---------------------------------------------------------------------------
+   styles.css — the inspector's appearance.
+
+   Shares the overview page's vocabulary: the same slate-blue accent,
+   the same hairline rules, monospace for anything that is data. The
+   two should look like one project.
+
+   What differs is the register. index.html at the repo root is a
+   document you read once; this is an instrument panel you watch, so
+   it is denser, darker by default, and sized to fit many rows rather
+   than to be comfortable at reading length.
+
+   Dark is the default here, where the overview page follows the
+   system. A log panel is usually open beside an editor and next to a
+   terminal, and a white rectangle in that company is the one thing
+   people reliably complain about. The light theme is still honoured
+   when the system asks for it.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --bg: #16150f;
+  --surface: #1e1c17;
+  --surface-sunk: #26231d;
+  --fg: #ece8e0;
+  --fg-dim: #9d958a;
+  --fg-faint: #7a7368;
+  --rule: #35312a;
+  --rule-strong: #4a453c;
+  --accent: #7fb3d1;
+  --accent-soft: #1b2831;
+  --good: #8fb58c;
+  --warn: #d9b45f;
+  --bad: #d98a7f;
+
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+/* The light theme, for a system that asks for it. Guarded with
+   :not([data-theme="dark"]) so an explicit choice still wins. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #fbfaf8;
+    --surface: #ffffff;
+    --surface-sunk: #f4f2ee;
+    --fg: #1a1815;
+    --fg-dim: #6a635a;
+    --fg-faint: #938b80;
+    --rule: #e0dbd2;
+    --rule-strong: #c8c1b6;
+    --accent: #2f5d78;
+    --accent-soft: #e2ecf2;
+    --good: #4a6b48;
+    --warn: #8a6410;
+    --bad: #a24a3a;
+
+    color-scheme: light;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+
+  /* The whole app is exactly the viewport: the page never scrolls,
+     only the two panes inside it do. Without this the log grows the
+     document and the header scrolls away, which on a live log means
+     the connection indicator disappears exactly when it matters. */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+
+header.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--rule-strong);
+  background: var(--surface);
+  flex: none;
+}
+
+.title { display: flex; align-items: baseline; gap: 0.7rem; min-width: 0; }
+
+h1 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.identity, .endpoint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--fg-faint);
+}
+
+.status { display: flex; align-items: center; gap: 0.8rem; }
+
+.connection {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  color: var(--warn);
+  border-color: var(--warn);
+}
+.connection.on { color: var(--good); border-color: var(--good); }
+
+/* ---- Layout ---- */
+
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 23rem;
+  min-height: 0; /* lets the children scroll instead of growing the grid */
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.pane-surface {
+  border-left: 1px solid var(--rule-strong);
+  background: var(--surface);
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  flex: none;
+}
+
+h2 {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--fg-dim);
+  margin: 0;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--fg-faint);
+  margin-right: auto;
+}
+
+.clear {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--fg-dim);
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+}
+.clear:hover { color: var(--fg); border-color: var(--fg-dim); }
+
+/* ---- Filters ---- */
+
+.filters {
+  display: flex;
+  gap: 1.4rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  flex: none;
+  flex-wrap: wrap;
+}
+
+.filter-group { display: flex; align-items: center; gap: 0.5rem; }
+
+.filter-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-faint);
+}
+
+.filter-row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--fg-dim);
+  cursor: pointer;
+  user-select: none;
+}
+.filter input { margin: 0; accent-color: var(--accent); }
+
+/* ---- The log ---- */
+
+.log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.3rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+}
+
+.row {
+  padding: 0.25rem 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+.row.hidden { display: none; }
+
+.row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.row-time { color: var(--fg-faint); flex: none; }
+
+.row-tag {
+  flex: none;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 0.3rem;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  opacity: 0.85;
+}
+.tag-mcp     { color: var(--accent); }
+.tag-handler { color: var(--good); }
+.tag-info    { color: var(--fg-faint); }
+.tag-warn    { color: var(--warn); }
+.tag-error   { color: var(--bad); }
+
+.row-transport {
+  flex: none;
+  font-size: 0.62rem;
+  color: var(--fg-faint);
+  background: var(--surface-sunk);
+  padding: 0 0.3rem;
+  border-radius: 2px;
+}
+
+.row-arrow { flex: none; color: var(--fg-faint); }
+
+/* The label takes the remaining width and wraps rather than being
+   clipped. A truncated label in a teaching panel hides exactly the
+   part that explains the row. */
+.row-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.row-elapsed { flex: none; color: var(--fg-faint); }
+
+/* Indented to the width of the time column, so the note lines up
+   under the label rather than under the clock. */
+.row-note {
+  margin-left: 4.6rem;
+  color: var(--fg-faint);
+  font-size: 0.68rem;
+}
+
+.row-detail { margin: 0.2rem 0 0.1rem 4.6rem; }
+.row-detail > summary {
+  cursor: pointer;
+  color: var(--fg-faint);
+  font-size: 0.68rem;
+  list-style-position: outside;
+}
+.row-detail > summary:hover { color: var(--accent); }
+
+.level-error { background: color-mix(in srgb, var(--bad) 8%, transparent); }
+.level-warn  { background: color-mix(in srgb, var(--warn) 7%, transparent); }
+
+/* ---- The JSON tree ----
+
+   json-tree.ts was copied from the chat lab, so it emits that
+   project's class names (jt-*). These rules are its styles ported to
+   this project's variables.
+
+   Worth stating because the two files must agree and nothing checks
+   that they do: a renamed class here silently loses its styling
+   rather than failing. An earlier draft of this stylesheet guessed
+   the names as .json-key and .json-string, which do not exist — the
+   tree rendered as unstyled text and looked, at a glance, like it had
+   simply not been built yet. */
+
+.json-tree {
+  margin: 0.3rem 0 0.1rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface-sunk);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  overflow-x: auto;
+}
+
+.jt-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.jt-control {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  cursor: pointer;
+}
+.jt-control:hover { border-color: var(--accent); color: var(--accent); }
+.jt-control:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.jt-node > summary {
+  cursor: pointer;
+  list-style: none;
+  padding-left: 0.85rem;
+  position: relative;
+}
+.jt-node > summary::-webkit-details-marker { display: none; }
+
+/* A triangle that turns. Positioned rather than inline so the keys
+   below it line up whether a row is a container or not. */
+.jt-node > summary::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: var(--fg-dim);
+  transition: transform 0.12s ease;
+  display: inline-block;
+}
+.jt-node[open] > summary::before { transform: rotate(90deg); }
+.jt-node > summary:hover { background: var(--surface); }
+.jt-node > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Children indent by one step, with a guide line back to the parent —
+   at four levels deep the line is what keeps the nesting readable. */
+.jt-children {
+  margin-left: 0.3rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--rule);
+}
+
+/* A primitive. Padded to match a summary's text, so keys form one
+   column regardless of what they hold. */
+.jt-line { padding-left: 0.85rem; }
+
+.jt-key { color: var(--accent); }
+.jt-bracket { color: var(--fg-dim); }
+
+/* What is inside a folded container: "name, arguments…". Says more
+   than "2 keys" about whether this is the branch you want. */
+.jt-hint {
+  margin: 0 0.3rem;
+  font-style: italic;
+  color: var(--fg-dim);
+  opacity: 0.85;
+}
+
+.jt-string { color: var(--good); overflow-wrap: anywhere; }
+.jt-number { color: var(--warn); }
+.jt-boolean { color: var(--accent); }
+.jt-null, .jt-other { color: var(--fg-dim); }
+.jt-more, .jt-hidden-rest { color: var(--fg-faint); }
+
+/* jt-root is the node holding the top-level entries, inside the
+   .json-tree container styled above; jt-summary is the clickable line
+   of a container node. Neither is styled in the chat lab — they
+   inherit and look fine there — but both are given a rule here so
+   that a reader grepping the stylesheet for a class they saw in the
+   DOM finds it, rather than concluding the stylesheet is incomplete. */
+.jt-root { margin: 0; }
+.jt-summary { color: var(--fg-dim); }
+
+/* ---- The surface panel ---- */
+
+.hint {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.74rem;
+  color: var(--fg-dim);
+  flex: none;
+}
+.hint p { margin: 0 0 0.35rem; }
+.hint p + code { margin-bottom: 0.6rem; }
+.hint code {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--fg);
+  background: var(--surface-sunk);
+  padding: 0.25rem 0.45rem;
+  border-radius: 2px;
+}
+
+.surface { flex: 1; overflow-y: auto; padding: 0 1rem 1.5rem; }
+
+.entry-group {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-faint);
+  margin: 1.1rem 0 0.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.entry { margin-bottom: 0.9rem; }
+
+.entry-head { display: flex; align-items: baseline; gap: 0.4rem; }
+
+.entry-badge {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 0.28rem;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  flex: none;
+}
+.badge-tool     { color: var(--accent); }
+.badge-resource { color: var(--good); }
+.badge-prompt   { color: var(--warn); }
+
+.entry-name {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.entry-description {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--fg-dim);
+}
+
+.entry-schema { margin-top: 0.3rem; }
+.entry-schema > summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--fg-faint);
+}
+.entry-schema > summary:hover { color: var(--accent); }
+
+/* ---- Narrow screens ---- */
+
+/* The surface panel drops below the log rather than beside it. Both
+   panes then scroll with the page, so the body's overflow lock is
+   released — a fixed-height two-pane layout on a phone leaves each
+   pane too short to read. */
+@media (max-width: 860px) {
+  body { height: auto; overflow: auto; }
+  main { grid-template-columns: 1fr; }
+  .pane-surface { border-left: 0; border-top: 1px solid var(--rule-strong); }
+  .log { max-height: 60vh; }
+}

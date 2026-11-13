@@ -409,7 +409,7 @@
   <dl class="facts">
     <div class="fact">
       <dt>Status</dt>
-      <dd>Phase 2<small>of 5 — server runs</small></dd>
+      <dd>Phase 3<small>of 5 — inspector live</small></dd>
     </div>
     <div class="fact">
       <dt>Transports</dt>
@@ -541,9 +541,14 @@
     </div>
     <p>The two prompts cover the primitive's whole range: <code>try_the_tools</code> returns a single message, and <code>explain_exchange</code> returns three — user, assistant, user — where the middle turn is a worked example the <em>server</em> wrote. That fabricated turn is why prompts return messages rather than text, and it is the same mechanism as prompt injection, differing only in who is doing it.</p>
 
+    <h3>The inspector</h3>
+    <p>A two-pane page at <code>localhost:3100</code>: the traffic log on the left, what the server exposes on the right. Every exchange appears as it happens — the request arriving, each handler running and returning with its timing, the response going back.</p>
+    <p>Rows carry a <strong>transport</strong> tag, which the chat lab's activity log has no equivalent of. With a stdio client and an HTTP client both connected, filtering by transport leaves one conversation alone on screen. The filters run in the browser and never reach the server, so unticking a level hides rows rather than stopping them being recorded — tick it again and the history is still there.</p>
+    <p>The surface panel shows the same JSON Schema a client receives from <code>tools/list</code>, produced by the same conversion, so it cannot flatter the server by describing something other than what is advertised.</p>
+
     <h3>Two transports, one protocol</h3>
     <p>The same server is served two ways. <code>stdio</code> is how Claude Desktop launches a local server — a child process talking over its own standard input and output. <strong>Streamable HTTP</strong> is how a remote server works, and is what the chat lab will connect to.</p>
-    <p>stdio works now; HTTP arrives in phase 3. <code>npm run try-stdio</code> and <code>npm run try-http</code> will then run <em>the same function</em> over each — one shared <code>session.ts</code>, called with two different clients, so any difference in output is a difference in the transport rather than in the script.</p>
+    <p>Both work now. <code>npm run try-stdio</code> and <code>npm run try-http</code> run <em>the same function</em> over each — one shared <code>session.ts</code>, called with two different clients, so any difference in output is a difference in the transport rather than in the script. Run both and diff them: after normalising the dice rolls and the uptime, the output is identical line for line.</p>
 
     <h3>Out of scope, deliberately</h3>
     <p>Sampling and elicitation — where the server calls <em>back</em> into the client — are not planned. They need client-side support that would complicate the chat lab integration substantially. Their absence is a decision, not an oversight.</p>
@@ -558,8 +563,8 @@
     <ol class="phases">
       <li class="done"><span class="ph-name">Skeleton — configs, scripts, conventions</span> <span class="ph-steps">done</span></li>
       <li class="done"><span class="ph-name">The MCP server: tools, resources, prompts, stdio</span> <span class="ph-steps">done</span></li>
-      <li><span class="ph-name">HTTP serving and the inspector UI</span> <span class="ph-steps">next</span></li>
-      <li><span class="ph-name">Chat lab integration</span> <span class="ph-steps">planned</span></li>
+      <li class="done"><span class="ph-name">HTTP serving and the inspector UI</span> <span class="ph-steps">done</span></li>
+      <li><span class="ph-name">Chat lab integration</span> <span class="ph-steps">next</span></li>
       <li><span class="ph-name">Documentation and Pages</span> <span class="ph-steps">planned</span></li>
     </ol>
 
@@ -606,20 +611,19 @@
     <ul class="status">
       <li class="ok">typecheck passes — both halves</li>
       <li class="ok">build passes</li>
-      <li class="ok">audit-comments passes — 24 files</li>
+      <li class="ok">audit-comments passes — 33 files</li>
       <li class="ok">check-env passes</li>
       <li class="ok">0 vulnerabilities</li>
-      <li class="ok">serves over stdio</li>
-      <li class="ok">verified against the MCP Inspector</li>
-      <li>3,550 lines of TypeScript</li>
+      <li class="ok">serves over stdio and HTTP</li>
+      <li class="ok">inspector live at :3100</li>
+      <li>5,366 lines of TypeScript</li>
       <li>4 tools · 3 resources · 2 prompts</li>
-      <li class="caution">no HTTP yet — phase 3</li>
-      <li class="caution">no inspector UI yet — phase 3</li>
+      <li class="caution">no chat lab integration yet — phase 4</li>
     </ul>
 
     <div class="note">
       <span class="note-label">What is built, and what is not</span>
-      <p>Phases 1 and 2 of 5 are complete. The server runs: all four tools, all three resources and both prompts work, verified against the MCP Inspector and a scripted client session. <strong>What does not exist yet is the HTTP transport and the inspector UI</strong> — so today you can drive this server from Claude Desktop or a stdio client, but you cannot yet watch it in a browser. That is phase 3. Every figure in the status row is measured.</p>
+      <p>Phases 1 to 3 of 5 are complete. The server runs over both transports, and the inspector at <code>localhost:3100</code> shows every exchange live. <strong>What remains is the chat lab integration</strong> — teaching <code>anthropic-chat-lab</code> to connect to this server so its tools appear beside the local ones. That is phase 4. Every figure in the status row is measured.</p>
     </div>
   </section>
 

@@ -24,22 +24,18 @@ anything.
 
 ---
 
-> ## ⚠️ Status: phase 1 of 5
+> ## Status: phase 3 of 5
 >
-> **The MCP server does not exist yet.** This repository currently holds
-> the project skeleton: the TypeScript configs, three CLI scripts, the
-> wire contract, and the conventions the rest of the build is held to.
+> **The server runs over both transports and the inspector is live.**
+> Start it with `npm run dev` and open <http://localhost:3100>.
 >
-> What works today: `npm run typecheck`, `npm run build`,
-> `npm run audit-comments`, `npm run check-env`.
+> What works: all four tools, three resources and two prompts, over
+> stdio and Streamable HTTP, with every exchange visible in the
+> inspector.
 >
-> What does not exist yet: the server, the tools, the resources, the
-> prompts, both transports, the inspector UI, and the chat lab
-> integration. Those are phases 2 to 5, specified in `PLAN.md`.
->
-> The scripts referenced in the table below that have no file yet
-> (`dev`, `stdio`, `try-stdio`, `try-http`) are declared in
-> `package.json` and will fail until the phase that adds them.
+> What does not exist yet: the chat lab integration — teaching
+> `anthropic-chat-lab` to connect to this server so its tools appear
+> beside the local ones. That is phase 4, specified in `PLAN.md`.
 
 ---
 
@@ -58,18 +54,30 @@ No database, no Docker, no hosting, no account.
 
 ```bash
 npm install
+npm run dev
 ```
 
-That is the whole setup. There is no `.env` to create and no key to
-paste.
+Then open <http://localhost:3100>. That is the whole setup — there is
+no `.env` to create and no key to paste.
 
-To confirm the skeleton is sound:
+To see traffic in the inspector, drive the server from a client. With
+`npm run dev` still running, in another terminal:
 
 ```bash
-npm run typecheck        # both halves
-npm run audit-comments   # every file explains itself
-npm run check-env        # the one setting, and it is optional
+npm run try-http
 ```
+
+The script walks through all three primitives and the inspector fills
+up as it goes.
+
+### Connecting it to Claude Desktop
+
+Build first (`npm run build`), then add a server entry pointing at
+`node dist/server/stdio.js`. Note that stdio traffic does **not**
+appear in the inspector: a stdio server is a child process of whoever
+launched it, so Claude Desktop gets its own copy of this server and
+the one behind the web page never sees those calls. That is a property
+of the transport, not a limitation of the lab.
 
 ---
 
@@ -115,10 +123,10 @@ either project.
 | `npm run build` | Compile both halves into `dist/` | yes |
 | `npm run audit-comments` | Verify every file has a header | yes |
 | `npm run check-env` | Inspect `.env` — the port, and a key that should not be there | yes |
-| `npm run dev` | Start the inspector on port 3100, restart on save | phase 3 |
-| `npm run stdio` | Serve over stdio, for Claude Desktop and the MCP Inspector | phase 2 |
-| `npm run try-stdio` | Connect as a client over stdio: list and call a tool | phase 3 |
-| `npm run try-http` | The same session over HTTP, to compare | phase 3 |
+| `npm run dev` | Start the inspector on port 3100, restart on save | yes |
+| `npm run stdio` | Serve over stdio, for Claude Desktop and the MCP Inspector | yes |
+| `npm run try-stdio` | Connect as a client over stdio: list and call a tool | yes |
+| `npm run try-http` | The same session over HTTP, to compare | yes |
 
 ---
 
@@ -127,8 +135,8 @@ either project.
 ```
 anthropic-mcp-lab/
 ├── shared/types.ts      the wire contract — imported by both halves
-├── server/              the MCP server, Express, the observer   (phase 2–3)
-├── public/              the inspector UI                        (phase 3)
+├── server/              the MCP server, Express, the observer
+├── public/              the inspector UI
 ├── scripts/             CLI utilities
 ├── index.html           the project overview, served by Pages
 └── PLAN.md              the full build plan, all five phases
