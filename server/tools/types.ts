@@ -34,8 +34,8 @@
  *      reader, and they are why this project's tools carry more metadata
  *      than the protocol defines.
  *
- *   3. ONE PLACE TO WRAP. The observer in phase 3 needs to see every
- *      handler run. Wrapping one array in one place is a few lines;
+ *   3. ONE PLACE TO WRAP. The observer needs to see every handler
+ *      run. Wrapping one array in one place is a few lines;
  *      remembering to wrap each registerTool call is a convention that
  *      will eventually be forgotten.
  *
@@ -202,17 +202,24 @@ export interface McpLabTool<TInput = unknown> {
   /**
    * A prompt that reliably triggers this tool.
    *
-   * Shown in the inspector's surface panel. A tool nobody knows how to
-   * invoke teaches nothing — and the prompts are chosen so that the
+   * A note for whoever is reading this definition: a tool nobody knows
+   * how to invoke teaches nothing, and the prompts are chosen so the
    * tool is genuinely needed, since a model asked something it can
-   * answer unaided will not reach for a tool.
+   * answer unaided will not reach for one.
    *
-   * Not part of MCP. No client will ever see this field; it exists for
-   * the person reading the panel.
+   * Not part of MCP, and not sent anywhere. `buildSurface` in
+   * `index.ts` sends the inspector `kind`, `name`, `description` and
+   * `inputSchema` — this field is not among them, and no client sees
+   * it either. It is documentation that happens to be typed.
    */
   examplePrompt: string;
 
-  /** What to watch for in the inspector when that prompt runs. */
+  /**
+   * What to watch for in the inspector when that prompt runs.
+   *
+   * Same as `examplePrompt`: a note for the reader of this file, not
+   * sent to the inspector or to any client.
+   */
   exampleWatch: string;
 }
 

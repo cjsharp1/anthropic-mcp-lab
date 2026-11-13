@@ -135,7 +135,13 @@ export interface McpLabResource {
    */
   read(uri: URL, params: UriParams): Promise<string>;
 
-  /** What to watch for in the inspector when this resource is read. */
+  /**
+   * What to watch for in the inspector when this resource is read.
+   *
+   * A note for the reader of this definition, not sent anywhere:
+   * `buildSurface` in `index.ts` sends the inspector `kind`, `name`
+   * and `description` for a resource, and no client sees this field.
+   */
   exampleWatch: string;
 }
 

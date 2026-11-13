@@ -265,9 +265,12 @@ app.all("/mcp", (req, res) => {
 // Everything below here is the inspector, not the protocol
 // ---------------------------------------------------------------------------
 
-// Mounted after /mcp so it cannot interfere with the raw body. The
-// inspector's own routes are small and JSON, and this is what parses
-// them.
+// No inspector route reads a request body today — both are GETs. The
+// parser stays, below /mcp, to mark the ordering rule: mounted above
+// it, this line would drain the stream the MCP adapter needs to read
+// for itself, and every protocol request would fail. Keeping it here
+// means a future route that does post JSON already has its parser,
+// in the one position that is safe.
 app.use(express.json({ limit: "1mb" }));
 
 app.use(express.static("public"));

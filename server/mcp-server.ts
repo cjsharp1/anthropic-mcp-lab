@@ -1,10 +1,13 @@
 /**
  * mcp-server.ts — builds the MCP server, registering everything on it.
  *
- * The centre of the project. Both entry points — `stdio.ts` for a
- * child-process client, `index.ts` for HTTP — call `createServer()` and
- * hand it to a serving function. Everything either of them serves is
- * registered here.
+ * The centre of the project. Both entry points reach it, by slightly
+ * different routes: `stdio.ts` passes `createServer` to `serveStdio`,
+ * and `index.ts` passes `makeServerFactory(hooks)` to
+ * `createMcpHandler`. The difference is only where the hooks come
+ * from — stdio has no inspector to report to, HTTP does — and both end
+ * in `buildServer`, which is where everything either of them serves is
+ * registered.
  *
  * ---------------------------------------------------------------------------
  * Why this exports a FACTORY and not a server
@@ -102,12 +105,17 @@ assertUniqueResourceUris();
 assertUniquePromptNames();
 
 /**
- * Something that went wrong while a handler ran, in a shape the
- * inspector can log.
+ * What this module reports while a handler runs.
  *
- * `onHandlerEvent` is how phase 3's observer will see inside this
- * module without this module importing it. Left as an optional
- * parameter so stdio can run with no observer at all.
+ * Two callbacks: `onStart` just before a handler runs, `onFinish` just
+ * after, whether it returned or threw. They are how the observer sees
+ * inside this module without this module importing it — `index.ts`
+ * supplies them from `Observer.hooks()`, and the dependency points one
+ * way, so nothing here knows an inspector exists.
+ *
+ * Both are optional because stdio runs with no observer at all:
+ * `createServer()` passes `{}` and every call site checks before
+ * calling.
  */
 export interface HandlerHooks {
   /** A handler is about to run. */
@@ -382,7 +390,7 @@ export function createServer(): McpServer {
 /**
  * Builds a factory that reports to the given hooks.
  *
- * This is what phase 3 hands to `createMcpHandler`. The returned
+ * This is what `index.ts` hands to `createMcpHandler`. The returned
  * function matches `McpServerFactory` exactly — one parameter, supplied
  * by the SDK, which this implementation happens not to need.
  *

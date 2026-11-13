@@ -131,7 +131,14 @@ export interface McpLabPrompt<TArgs = unknown> {
    */
   build(args: TArgs): PromptTurn[];
 
-  /** What to watch for in the inspector when this prompt is fetched. */
+  /**
+   * What to watch for in the inspector when this prompt is fetched.
+   *
+   * A note for the reader of this definition, not sent anywhere:
+   * `buildSurface` in `index.ts` sends the inspector `kind`, `name`,
+   * `description` and `inputSchema` for a prompt, and no client sees
+   * this field.
+   */
   exampleWatch: string;
 }
 

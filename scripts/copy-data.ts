@@ -23,14 +23,14 @@
  * ---------------------------------------------------------------------------
  *
  * This one tolerates server/data not existing. The chat lab's version
- * assumes it does, which is true there and is not yet true here —
- * resources arrive in phase 2, and until then `npm run build` would
- * fail on a directory nobody has created.
+ * assumes it does. Both directories exist today — this server's holds
+ * the Markdown behind the protocol-notes resource — so the difference
+ * no longer shows, but it is kept: this project has fewer data files
+ * than the chat lab and could lose its last one, and a build step that
+ * fails on an empty directory is a bad trade.
  *
- * A build step that breaks the build before the feature it supports
- * exists is a bad trade, so absence is reported and skipped. Absence
- * is the only tolerated failure: a data directory that exists but
- * cannot be read still throws.
+ * Absence is the only tolerated failure: a data directory that exists
+ * but cannot be read still throws.
  */
 
 import { cp, mkdir, stat } from "node:fs/promises";
