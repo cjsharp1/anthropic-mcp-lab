@@ -271,11 +271,6 @@ h2 {
    The colour follows the meaning — a protocol exchange with the outside
    world — not the word. */
 
-.row {
-  padding: 0.25rem 1rem;
-  border-bottom: 1px solid var(--rule);
-  border-left: 3px solid transparent;
-}
 .row.hidden { display: none; }
 
 /* Inbound — a request arriving from a client. The exchange with the
@@ -320,8 +315,8 @@ h2 {
 }
 .dir-back .row-arrow { color: var(--level-tool); }
 
-/* The 3px the other rows carry is made up with padding here, so a
-   thicker edge does not shift the text beside it. */
+/* The extra 3px of edge is taken out of the padding, so a thicker
+   border does not shift the text beside it. */
 .row.dir-call, .row.dir-back { padding-left: calc(1rem - 3px); }
 
 /* Internal notes recede: no tint, faded marker. They are context, not
@@ -331,115 +326,126 @@ h2 {
 }
 .dir-none .row-arrow { color: var(--fg-dim); opacity: 0.5; }
 
-/* The head is a COLUMN LAYOUT, not a row of things pushed together.
+/* Row layout, taken from the chat lab's activity log.
 
-   Flex with auto-sized items was the first version and it did not
-   work: HANDLER is wider than MCP, so every tag ended a different
-   distance from the left and no two labels began in the same place.
-   Add the transport pill, which is absent on internal rows, and the
-   columns moved again.
+   An arrow column and a text column. The arrow is the primary signal
+   and sits leftmost; everything else stacks in the second column:
 
-   Grid with fixed track widths fixes both. Every row has the same
-   five columns whether or not it fills them, so the labels form a
-   column and the eye can run down it. The widths are sized to the
-   longest value each column can hold — "HANDLER" for the tag, "stdio"
-   for the transport — rather than guessed. */
-.row-head {
+     [>]  label ....................................  19:42:43
+          MCP  http  tools/call · id 3 · because...        30ms
+          > detail
+
+   An earlier version here put the time, the level badge and the
+   transport pill in fixed columns to the LEFT of the label. It
+   aligned, but it gave the most prominent position in the panel to
+   the least-read value, and it pushed every label a third of the way
+   across the pane. The chat lab had already worked through that and
+   moved the time to the right margin; this follows it. */
+.row-head { display: contents; }
+
+.row {
   display: grid;
-  grid-template-columns:
-    [time] 4.2rem
-    [tag] 4.6rem
-    [transport] 2.9rem
-    [arrow] 0.9rem
-    [label] 1fr
-    [elapsed] auto;
+  grid-template-columns: 1.1rem 1fr;
+  column-gap: 0.5rem;
+  row-gap: 0.15rem;
   align-items: baseline;
-  column-gap: 0.45rem;
+  padding: 0.35rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  border-left: 3px solid transparent;
 }
 
-.row-time { color: var(--fg-faint); }
-
-/* Centred in its track and inline-block so the border hugs the text
-   rather than stretching across the whole column — a full-width
-   bordered box would read as a button. */
-.row-tag {
-  justify-self: start;
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0 0.3rem;
-  border-radius: 2px;
-  border: 1px solid currentColor;
-  opacity: 0.85;
-  white-space: nowrap;
-}
-/* Level: the secondary signal, carried by the tag alone.
-
-   `mcp` takes --level-api and `handler` takes --level-tool, which is
-   the same mapping the chat lab uses for the same two ideas: a
-   protocol exchange with something outside this process, and a
-   function running inside it. */
-.tag-mcp     { color: var(--level-api); }
-.tag-handler { color: var(--level-tool); }
-.tag-info    { color: var(--level-info); }
-.tag-warn    { color: var(--level-warn); }
-.tag-error   { color: var(--level-error); }
-
-/* Explicitly placed in its own track. The transport pill is absent on
-   internal rows, and without this the arrow would slide left into the
-   gap on those rows while every other row kept it one column further
-   right. */
-.row-transport {
-  grid-column: transport;
-  justify-self: start;
-  font-size: 0.62rem;
-  color: var(--fg-faint);
-  background: var(--surface-sunk);
-  padding: 0 0.3rem;
-  border-radius: 2px;
-  white-space: nowrap;
-}
-
-.row-arrow {
-  grid-column: arrow;
-  color: var(--fg-faint);
-  text-align: center;
-}
-
-/* The label takes the remaining width and wraps rather than being
-   clipped. A truncated label in a teaching panel hides exactly the
-   part that explains the row.
-
-   Placed explicitly for the same reason as the transport pill: on a
-   row with no transport it would otherwise start one column early. */
-.row-label {
-  grid-column: label;
+/* The headline: what happened, with the time pushed right. */
+.row-headline {
+  grid-column: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
   min-width: 0;
+}
+
+.row-label {
+  min-width: 0;          /* let long labels wrap rather than widen the pane */
+  font-weight: 500;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
-.row-elapsed { grid-column: elapsed; color: var(--fg-faint); }
-
-/* Lined up under the LABEL, not under the clock.
-
-   The offset is the sum of the four tracks before the label plus the
-   four gaps between them — written as the arithmetic rather than as a
-   magic number, so that changing a track width above does not
-   silently leave these two lines misaligned.
-
-     4.2 + 4.6 + 2.9 + 0.9  tracks
-     4 × 0.45               gaps                                      */
-.row-note,
-.row-detail {
-  margin-left: calc(4.2rem + 4.6rem + 2.9rem + 0.9rem + (4 * 0.45rem));
-}
-
-.row-note {
-  color: var(--fg-faint);
+.row-time {
+  flex-shrink: 0;
   font-size: 0.68rem;
+  color: var(--fg-dim);
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
 }
 
-.row-detail { margin-top: 0.2rem; margin-bottom: 0.1rem; }
+.row-arrow {
+  grid-column: 1;
+  text-align: center;
+  color: var(--fg-faint);
+}
+
+/* The meta line: kind, transport, reason, timing — one sentence. */
+.row-meta {
+  grid-column: 2;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.45rem;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--fg-dim);
+}
+
+.row-level {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--level-info);
+}
+
+/* A badge, in the slot the chat lab gives its actor. Both answer the
+   same question: who or what was this between. */
+.row-transport {
+  flex-shrink: 0;
+  padding: 0.02rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-dim);
+  background: var(--surface-sunk);
+}
+
+/* Level: the secondary signal, carried by the one word on the meta
+   line. `mcp` takes --level-api and `handler` takes --level-tool —
+   the same mapping the chat lab uses for the same two ideas: an
+   exchange with something outside this process, and a function
+   running inside it. */
+.level-mcp .row-level     { color: var(--level-api); }
+.level-handler .row-level { color: var(--level-tool); }
+.level-info .row-level    { color: var(--level-info); }
+.level-warn .row-level    { color: var(--level-warn); }
+.level-error .row-level   { color: var(--level-error); }
+
+.row-why { min-width: 0; overflow-wrap: anywhere; }
+
+/* Pushed to the right margin, where the eye already goes for the
+   time. A duration belongs with the clock, not in the prose. */
+.row-elapsed {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-faint);
+}
+
+/* The detail expander sits in the text column, under the label. */
+.row-detail {
+  grid-column: 2;
+  margin: 0.1rem 0 0;
+}
 .row-detail > summary {
   cursor: pointer;
   color: var(--fg-faint);

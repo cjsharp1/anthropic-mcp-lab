@@ -108,6 +108,27 @@ function arrowOf(event: InspectorEvent): string {
   }
 }
 
+/**
+ * What the arrow means, as hover text.
+ *
+ * The marks are compact enough to be ambiguous on first sight, and a
+ * title attribute costs nothing. The chat lab does the same.
+ */
+function directionTitle(direction: string): string {
+  switch (direction) {
+    case "in":
+      return "a client sent this to us";
+    case "out":
+      return "we sent this back";
+    case "call":
+      return "we called a handler";
+    case "back":
+      return "the handler returned";
+    default:
+      return "internal — nothing crossed a boundary";
+  }
+}
+
 /** Whether a row should currently be visible. */
 function isVisible(event: InspectorEvent): boolean {
   if (state.hiddenLevels.has(event.level)) return false;
@@ -161,82 +182,101 @@ export function appendEvent(event: InspectorEvent): void {
 
   const row = document.createElement("div");
 
-  // Two classes carrying two independent signals — see the colour
-  // section of styles.css. `dir-*` tints the row and colours its left
-  // edge; `level-*` colours the tag, and for warn and error also takes
-  // over the row, because a failure matters more than which way it was
-  // travelling.
+  // Three classes carrying three independent signals — the same
+  // arrangement the chat lab's activity log uses, so the two panels
+  // read the same way.
   //
-  // An absent direction is "none" rather than nothing, so that an
-  // internal note gets the faded treatment instead of falling through
-  // to an untinted row that looks like a styling bug.
-  row.className = `row level-${event.level} dir-${event.direction ?? "none"}`;
+  //   dir-*    tints the row and colours the arrow: which way it went
+  //   level-*  colours the level word, and for warn and error takes
+  //            over the row, because a failure matters more than
+  //            which way it was travelling
+  //
+  // An absent direction is "none" rather than nothing, so an internal
+  // note gets the faded treatment instead of falling through to an
+  // untinted row that looks like a styling bug.
+  const direction = event.direction ?? "none";
+  row.className = `row level-${event.level} dir-${direction}`;
 
   if (!isVisible(event)) row.classList.add("hidden");
 
-  // --- The always-visible line ---------------------------------------------
-
-  const head = document.createElement("div");
-  head.className = "row-head";
-
-  const time = document.createElement("span");
-  time.className = "row-time";
-  time.textContent = clockOf(event.at);
-  head.append(time);
-
-  const tag = document.createElement("span");
-  tag.className = `row-tag tag-${event.level}`;
-  tag.textContent = event.level;
-  head.append(tag);
-
-  // The transport, when there is one. This is the field the chat lab's
-  // log has no equivalent of, and the one that makes two concurrent
-  // clients readable.
-  if (event.transport && event.transport !== "none") {
-    const transport = document.createElement("span");
-    transport.className = `row-transport transport-${event.transport}`;
-    transport.textContent = event.transport;
-    head.append(transport);
-  }
-
+  // --- The arrow, in its own narrow column ---------------------------------
+  //
+  // The primary signal, and the leftmost thing in the row: it answers
+  // "in, out, or neither" before a word is read.
   const arrow = document.createElement("span");
   arrow.className = "row-arrow";
   arrow.textContent = arrowOf(event);
-  head.append(arrow);
+  arrow.title = directionTitle(direction);
+  row.append(arrow);
+
+  // --- The headline: what happened, with the time at the right margin ------
+  //
+  // The time used to lead each row, which gave the most prominent
+  // position in the panel to the least-read value. The chat lab moved
+  // it to the right margin for that reason and this follows.
+  const headline = document.createElement("div");
+  headline.className = "row-headline";
 
   const label = document.createElement("span");
   label.className = "row-label";
   // textContent. See the header — this string may have come from a
   // remote client.
   label.textContent = event.label;
-  head.append(label);
 
-  if (event.elapsedMs !== undefined) {
-    const elapsed = document.createElement("span");
-    elapsed.className = "row-elapsed";
-    elapsed.textContent = `${event.elapsedMs}ms`;
-    head.append(elapsed);
+  const time = document.createElement("span");
+  time.className = "row-time";
+  time.textContent = clockOf(event.at);
+
+  headline.append(label, time);
+  row.append(headline);
+
+  // --- The meta line: what kind, over what, and why ------------------------
+  //
+  // These belong together as one sentence — "an MCP message, over
+  // HTTP, because the client asked for the tool list". The chat lab
+  // learned this the hard way: its level used to sit in its own
+  // column at the far left, separated from the reason by the whole
+  // width of the label.
+  const meta = document.createElement("div");
+  meta.className = "row-meta";
+
+  const level = document.createElement("span");
+  level.className = "row-level";
+  level.textContent = event.level;
+  meta.append(level);
+
+  // The transport, as a badge in the same slot the chat lab gives its
+  // actor. Both answer "who or what was this between".
+  if (event.transport && event.transport !== "none") {
+    const transport = document.createElement("span");
+    transport.className = `row-transport transport-${event.transport}`;
+    transport.textContent = event.transport;
+    meta.append(transport);
   }
 
-  row.append(head);
-
-  // --- The second line, when there is more to say --------------------------
-
-  // `because` and the JSON-RPC id answer two different questions that
-  // both come up constantly: why did this happen, and which exchange
-  // does it belong to. Shown together on a quieter line so the head
-  // stays scannable.
+  // The JSON-RPC method and id, which answer "which exchange is this
+  // part of" — the question the chat lab has no equivalent of,
+  // because one HTTP call there carries one exchange.
   const notes: string[] = [];
   if (event.method) notes.push(event.method);
   if (event.id !== undefined) notes.push(`id ${JSON.stringify(event.id)}`);
   if (event.because) notes.push(event.because);
 
   if (notes.length > 0) {
-    const note = document.createElement("div");
-    note.className = "row-note";
-    note.textContent = notes.join("  ·  ");
-    row.append(note);
+    const why = document.createElement("span");
+    why.className = "row-why";
+    why.textContent = notes.join(" · ");
+    meta.append(why);
   }
+
+  if (event.elapsedMs !== undefined) {
+    const elapsed = document.createElement("span");
+    elapsed.className = "row-elapsed";
+    elapsed.textContent = `${event.elapsedMs}ms`;
+    meta.append(elapsed);
+  }
+
+  row.append(meta);
 
   // --- The expandable detail -----------------------------------------------
 
