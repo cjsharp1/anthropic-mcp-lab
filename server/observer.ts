@@ -50,7 +50,7 @@
  * see it, even though the HTTP status is 200.
  */
 
-import type { InspectorEvent, SurfaceSnapshot } from "../shared/types.js";
+import type { InspectorEvent } from "../shared/types.js";
 import { makeLogger, truncate, type Logger } from "./logger.js";
 import type { HandlerHooks } from "./mcp-server.js";
 
@@ -87,9 +87,6 @@ export class Observer {
   /** The last REPLAY_LIMIT events, for browsers that connect late. */
   private readonly recent: InspectorEvent[] = [];
 
-  /** What the server exposes. Set once at startup by index.ts. */
-  private surface: SurfaceSnapshot | null = null;
-
   /**
    * The logger every part of the server writes through.
    *
@@ -105,16 +102,6 @@ export class Observer {
     // than as a method reference so there is no `this`-binding hazard
     // if a caller ever destructures the logger.
     this.log = makeLogger((event) => this.publish(event));
-  }
-
-  /** Records what the server exposes, so a new inspector can be told. */
-  setSurface(surface: SurfaceSnapshot): void {
-    this.surface = surface;
-  }
-
-  /** What the server exposes, or null before startup finishes. */
-  getSurface(): SurfaceSnapshot | null {
-    return this.surface;
   }
 
   /** The events a newly connected inspector should be shown first. */

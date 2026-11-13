@@ -321,13 +321,22 @@ function buildSurface(): SurfaceSnapshot {
 }
 
 /**
+ * Built once, here, because nothing can change it.
+ *
+ * The registries are fixed at import time, so the answer is the same
+ * on the first request and the ten-thousandth. Both routes below serve
+ * this same object.
+ */
+const surface = buildSurface();
+
+/**
  * GET /api/surface — what the server currently offers.
  *
  * Fetched once when the inspector loads. State rather than history:
  * the event stream says what has happened, this says what is true.
  */
 app.get("/api/surface", (_req, res) => {
-  res.json(observer.getSurface() ?? buildSurface());
+  res.json(surface);
 });
 
 /**
@@ -360,7 +369,7 @@ app.get("/api/stream", (req, res) => {
 
   // What the server offers, before any history, so the panel can draw
   // itself immediately rather than appearing empty for a moment.
-  send({ type: "surface", surface: observer.getSurface() ?? buildSurface() });
+  send({ type: "surface", surface });
 
   // Then the backlog. A browser opened after a few tool calls should
   // see them — an empty panel reads as "nothing happened" rather than
@@ -381,8 +390,6 @@ app.get("/api/stream", (req, res) => {
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
-
-observer.setSurface(buildSurface());
 
 app.listen(PORT, () => {
   // console.log is correct HERE and a bug in stdio.ts. There, stdout
