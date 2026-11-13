@@ -91,7 +91,20 @@ function clockOf(at: number): string {
  * Characters rather than icons, so there is no asset to load and no
  * sprite to keep aligned. The pairs are chosen to be distinguishable
  * at a glance: protocol traffic uses horizontal arrows, handler calls
- * use angled ones.
+ * use curved ones.
+ *
+ * The exact glyphs are the chat lab's, so the two panels read the
+ * same way side by side. This used to use the straight diagonals
+ * ↘ and ↖; the curved ⤷ and ⤶ say "down into something and back
+ * out again", which is what a handler call is, and a diagonal in a
+ * column of horizontals is easy to misread as a horizontal.
+ *
+ * The horizontal pair is NOT mirrored to match that project, and
+ * that difference is deliberate. There, "out" is a request leaving
+ * for Anthropic; here this process is the one being called, so "in"
+ * is the request arriving. Both label the arrow by what it means
+ * locally, which is why → is a request in both panels even though
+ * the direction word attached to it differs.
  */
 function arrowOf(event: InspectorEvent): string {
   switch (event.direction) {
@@ -100,9 +113,9 @@ function arrowOf(event: InspectorEvent): string {
     case "out":
       return "←";
     case "call":
-      return "↘";
+      return "⤷";
     case "back":
-      return "↖";
+      return "⤶";
     default:
       return "·";
   }
@@ -145,6 +158,71 @@ function isVisible(event: InspectorEvent): boolean {
 const rows: Array<{ element: HTMLElement; event: InspectorEvent }> = [];
 
 /**
+ * The element a row belongs in: its exchange's group, or the panel.
+ *
+ * The chat lab groups rows under the request that caused them, so a
+ * turn that made three API calls reads as three blocks rather than
+ * one undifferentiated stream. This is the same idea with the key
+ * this protocol gives us: the JSON-RPC id.
+ *
+ * An id is exactly the right key. A request, every handler call it
+ * triggers, and the response that goes back all carry it, which is
+ * the same set of rows the chat lab puts in one group. Notifications
+ * have no id and belong to no exchange — those go straight into the
+ * panel, like the chat lab's setup and summary rows.
+ *
+ * The id is NOT normalised to a string. The spec allows both, and an
+ * id of 1 and an id of "1" are different ids — shared/types.ts says
+ * so about pairing, and it is just as true about grouping. They are
+ * kept distinct by tagging the key with the type.
+ */
+function containerFor(event: InspectorEvent): HTMLElement {
+  if (!panel) throw new Error("log not initialised");
+  if (event.id === undefined) return panel;
+
+  const key = `${typeof event.id}:${String(event.id)}`;
+
+  const existing = panel.querySelector<HTMLElement>(
+    `[data-group="${CSS.escape(key)}"] .log-group-rows`,
+  );
+  if (existing) return existing;
+
+  const group = document.createElement("div");
+  group.className = "log-group";
+  group.dataset["group"] = key;
+
+  const header = document.createElement("div");
+  header.className = "log-group-header";
+  // textContent, as everywhere here: the method name came off the
+  // wire from a client we do not control. See the module header.
+  header.textContent = event.method
+    ? `${event.method} · id ${String(event.id)}`
+    : `id ${String(event.id)}`;
+
+  const groupRows = document.createElement("div");
+  groupRows.className = "log-group-rows";
+
+  group.append(header, groupRows);
+  panel.append(group);
+
+  return groupRows;
+}
+
+/**
+ * Hides a group whose rows are all filtered out.
+ *
+ * An empty header with nothing under it is noise — the chat lab does
+ * the same after applying its filters.
+ */
+function refreshGroupVisibility(): void {
+  if (!panel) return;
+  for (const group of panel.querySelectorAll<HTMLElement>(".log-group")) {
+    const visible = group.querySelectorAll(".row:not(.hidden)").length;
+    group.classList.toggle("hidden", visible === 0);
+  }
+}
+
+/**
  * Re-applies the filters to every existing row.
  *
  * Toggles a class rather than removing elements — see the header for
@@ -154,6 +232,7 @@ export function applyFilters(): void {
   for (const row of rows) {
     row.element.classList.toggle("hidden", !isVisible(row.event));
   }
+  refreshGroupVisibility();
 }
 
 /** Removes every row. */
@@ -168,8 +247,11 @@ export function clearLog(): void {
 /** Updates the count beside the title. */
 function updateCounter(): void {
   if (!counter) return;
-  counter.textContent =
-    state.eventCount === 1 ? "1 event" : `${state.eventCount} events`;
+  // Just the number. It sits in a pill beside the words "Traffic
+  // log", which already say what is being counted — spelling out
+  // "37 events" there said it twice. The chat lab's badge does the
+  // same.
+  counter.textContent = String(state.eventCount);
 }
 
 /**
@@ -295,7 +377,18 @@ export function appendEvent(event: InspectorEvent): void {
     row.append(details);
   }
 
-  panel.append(row);
+  // Group the row under its exchange rather than appending it flat.
+  const container = containerFor(event);
+  container.append(row);
+
+  // A group hides itself when every row in it is filtered out. A new
+  // visible row has to bring it back, or rows arrive into a container
+  // nobody can see.
+  const group = container.closest<HTMLElement>(".log-group");
+  if (group && !row.classList.contains("hidden")) {
+    group.classList.remove("hidden");
+  }
+
   rows.push({ element: row, event });
 
   state.eventCount += 1;

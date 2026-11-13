@@ -18,19 +18,29 @@
    --------------------------------------------------------------------------- */
 
 :root {
-  --bg: #16150f;
-  --surface: #1e1c17;
-  --surface-sunk: #26231d;
-  --fg: #ece8e0;
-  --fg-dim: #9d958a;
-  --fg-faint: #7a7368;
-  --rule: #35312a;
-  --rule-strong: #4a453c;
-  --accent: #7fb3d1;
-  --accent-soft: #1b2831;
-  --good: #8fb58c;
-  --warn: #d9b45f;
-  --bad: #d98a7f;
+  /* ---- Surfaces, text and accent ----------------------------------------
+
+     Taken from the chat lab, values unchanged, so the two apps read as
+     one project. This file previously carried its own warm-dark scheme
+     with a slate-blue accent and defaulted to dark; the activity log
+     and the traffic log are read side by side, and two different
+     palettes made them look like different products even though every
+     row rule already matched.
+
+     The chat lab follows the system theme rather than forcing dark, so
+     this does too. The old note here argued a log panel sits next to a
+     terminal and should be dark by default — true, but it applies just
+     as much to the chat lab's log, and matching it is the point. */
+  --bg: #f7f6f4;
+  --surface: #ffffff;
+  --surface-sunk: #efedea;
+  --border: #ddd9d4;
+
+  --fg: #1d1b19;
+  --fg-dim: #6a6660;
+
+  --accent: #9a4f20;
+  --accent-fg: #ffffff;
 
   /* ---- Log colours -------------------------------------------------------
 
@@ -44,56 +54,70 @@
      the two occupy the same slot — the protocol exchange that is the
      panel's reason to exist. Renaming it to --level-mcp here would make
      the two stylesheets diff as different when they are the same. */
-  --level-info: #8fa3b8;
-  --level-api: #72b894;
-  --level-tool: #d4a356;
-  --level-warn: #d9b45f;
-  --level-error: #e07878;
+  --level-info: #5b6b7c;
+  --level-api: #2f6b4f;
+  --level-tool: #8a5a12;
+  --level-warn: #8a6410;
+  --level-error: #a32b2b;
 
-  /* Aliases for the chat lab's names, so the two stylesheets can be
-     read with one vocabulary and a rule can be copied between them
-     without translation. --border and --font-ui are what that project
-     calls these; --rule and --font-body are what this one called them
-     first. Both resolve to the same value. */
-  --border: var(--rule);
-  --font-ui: var(--font-body);
+  /* ---- Names this project uses that the chat lab does not ---------------
+
+     Derived from the shared tokens above rather than given values of
+     their own, so there is one place to change a colour. --rule and
+     --border are the same hairline under two names; --fg-faint is a
+     third text weight below --fg-dim, which the chat lab achieves with
+     opacity instead.
+
+     Kept because roughly twenty rules in this file reference them.
+     Renaming those would be churn in rules that are otherwise already
+     identical to the chat lab's. */
+  --rule: var(--border);
+  --rule-strong: #c8c1b6;
+  --fg-faint: #938b80;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --good: var(--level-api);
+  --warn: var(--level-warn);
+  --bad: var(--level-error);
+
+  /* Aliases so a rule can be copied between the two stylesheets without
+     translation. --font-body is what this project called the UI font
+     first; --font-ui is the chat lab's name for it. */
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: var(--font-ui);
+  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+
   --gap: 1rem;
+  --radius: 6px;
   --log-detail-indent: 1.6rem;
 
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-
-  color-scheme: dark;
+  color-scheme: light;
 }
 
-/* The light theme, for a system that asks for it. Guarded with
-   :not([data-theme="dark"]) so an explicit choice still wins. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #fbfaf8;
-    --surface: #ffffff;
-    --surface-sunk: #f4f2ee;
-    --fg: #1a1815;
-    --fg-dim: #6a635a;
-    --fg-faint: #938b80;
-    --rule: #e0dbd2;
-    --rule-strong: #c8c1b6;
-    --accent: #2f5d78;
-    --accent-soft: #e2ecf2;
-    --good: #4a6b48;
-    --warn: #8a6410;
-    --bad: #a24a3a;
+/* Dark mode. The chat lab's values, again unchanged. Guarded with
+   :not([data-theme="light"]) so an explicit light choice still wins. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161513;
+    --surface: #1f1e1b;
+    --surface-sunk: #262421;
+    --border: #35322d;
 
-    /* The chat lab's light-mode log colours, same as above. Darker and
-       more saturated than their dark-mode counterparts: a tint that
-       reads clearly against #16150f disappears against white. */
-    --level-info: #5b6b7c;
-    --level-api: #2f6b4f;
-    --level-tool: #8a5a12;
-    --level-warn: #8a6410;
-    --level-error: #a32b2b;
+    --fg: #eae7e1;
+    --fg-dim: #968f85;
 
-    color-scheme: light;
+    --accent: #d98a55;
+    --accent-fg: #1a1613;
+
+    --level-info: #8fa3b8;
+    --level-api: #72b894;
+    --level-tool: #d4a356;
+    --level-warn: #d9b45f;
+    --level-error: #e07878;
+
+    --rule-strong: #4a453c;
+    --fg-faint: #7a7368;
+
+    color-scheme: dark;
   }
 }
 
@@ -143,7 +167,10 @@ h1 {
   margin: 0;
 }
 
-.identity, .endpoint {
+/* .identity was dropped along with the server name/version chip in
+   the header; .endpoint is the "POST /mcp" label beside the
+   connection state, which stays. */
+.endpoint {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--fg-faint);
@@ -183,52 +210,99 @@ main {
   background: var(--surface);
 }
 
+/* The pane header. The chat lab's #log-header, rule for rule: a
+   title, then the one action belonging to that pane, on --surface
+   with a hairline under it.
+
+   This used to be an uppercase 0.72rem label with wide tracking,
+   which read as a column heading rather than a pane title and made
+   the two apps look unrelated at the very top of the panel — the
+   first thing the eye lands on. */
 .pane-head {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--rule);
+  gap: 0.6rem;
+  padding: 0.55rem var(--gap);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   flex: none;
 }
 
-h2 {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--fg-dim);
+/* Sentence case, not uppercase: this is a name, not a label. */
+.pane-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0;
+  margin-right: auto; /* pushes the action to the far end */
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--fg);
 }
 
-.count {
+/* The count, as a pill. Was plain mono text, which disappeared next
+   to the title instead of reading as a count. */
+.tab-badge {
+  display: inline-block;
+  min-width: 1.3rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 999px;
+  background: var(--border);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--fg-faint);
-  margin-right: auto;
-}
-
-.clear {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-align: center;
   color: var(--fg-dim);
-  background: none;
-  border: 1px solid var(--rule-strong);
-  border-radius: 2px;
-  padding: 0.15rem 0.5rem;
-  cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
-.clear:hover { color: var(--fg); border-color: var(--fg-dim); }
+
+/* Clear, as an underlined accent link rather than a bordered box.
+   A bordered button is the heaviest thing in the header and competes
+   with the title; the chat lab makes it a link because clearing the
+   log is an occasional action, not the point of the panel. */
+.link-button {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-button:hover {
+  filter: brightness(1.15);
+}
 
 /* ---- Filters ---- */
 
+/* The filter bar. The chat lab's #log-actions: a sunk strip with a
+   fixed height, sitting above the scrolling panel.
+
+   Not sticky here, and it does not need to be: it is a sibling of
+   the scroller rather than a child of it, so it never scrolls away.
+   The chat lab's equivalent IS inside its list and needs position
+   sticky to stay put — which is also why its group headers offset
+   themselves by that bar's height and these do not.
+
+   The height is fixed rather than derived from padding plus content,
+   for the reason that project gives: boxes sized by their content
+   differ by a pixel or two between the two apps and that shows as a
+   step when they sit side by side. */
 .filters {
   display: flex;
-  gap: 1.4rem;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--rule);
-  flex: none;
+  align-items: center;
+  gap: 0.4rem 1.2rem;
   flex-wrap: wrap;
+  background: var(--surface-sunk);
+  border-bottom: 1px solid var(--border);
+  min-height: 2.1rem;
+  padding: 0 var(--gap);
+  flex: none;
 }
 
 .filter-group { display: flex; align-items: center; gap: 0.5rem; }
@@ -241,19 +315,57 @@ h2 {
   color: var(--fg-faint);
 }
 
-.filter-row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+.filter-row { display: flex; align-items: center; gap: 0.25rem 0.75rem; flex-wrap: wrap; }
 
+/* Uppercase mono, matching .log-filter. Lowercase read as prose and
+   made the row look like a sentence rather than a set of toggles. */
 .filter {
   display: flex;
   align-items: center;
   gap: 0.25rem;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--fg-dim);
   cursor: pointer;
   user-select: none;
 }
-.filter input { margin: 0; accent-color: var(--accent); }
+
+.filter input[type="checkbox"] {
+  width: 0.78rem;
+  height: 0.78rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Each level filter carries its own colour, so the row doubles as a
+   legend for the stripes down the panel. Previously every checkbox
+   was the same accent and the row said nothing about what the
+   colours in the log meant.
+
+   The level names differ from the chat lab's — mcp and handler where
+   that project has api and tool — but they map to the same two
+   colours, the same mapping .level-mcp and .level-handler use below. */
+.f-mcp { accent-color: var(--level-api); }
+.f-mcp .filter-name { color: var(--level-api); }
+.f-handler { accent-color: var(--level-tool); }
+.f-handler .filter-name { color: var(--level-tool); }
+.f-info { accent-color: var(--level-info); }
+.f-info .filter-name { color: var(--level-info); }
+.f-warn { accent-color: var(--level-warn); }
+.f-warn .filter-name { color: var(--level-warn); }
+.f-error { accent-color: var(--level-error); }
+.f-error .filter-name { color: var(--level-error); }
+
+/* Transport filters are not levels and carry no level colour: they
+   answer a different question. They keep the accent. */
+.f-http, .f-stdio, .f-none { accent-color: var(--accent); }
+
+/* An unchecked filter recedes, so the enabled set reads at a glance. */
+.filter:has(input:not(:checked)) {
+  opacity: 0.4;
+}
 
 /* ---- The log ---- */
 
@@ -283,6 +395,50 @@ h2 {
      check the ancestors before concluding a property is unset. */
   font-family: var(--font-mono);
   font-size: 0.78rem;
+}
+
+/* ---- Exchange groups ----------------------------------------------------
+
+   Rows are grouped under the JSON-RPC exchange that produced them,
+   the way the chat lab groups rows under the request that caused
+   them. One tools/call produces a request row, a handler call, a
+   handler return and a response row; flat, those four sit in the
+   same stream as everything else and the fact that they are one
+   exchange is invisible.
+
+   The header is sticky, so while you are reading the middle of a
+   long exchange the id and method stay on screen. The chat lab's
+   equivalent offsets its sticky header by the height of the actions
+   bar above it; here the filters bar is not sticky, so this sits
+   flush at the top of the scrolling panel. */
+
+.log-group {
+  border-bottom: 1px solid var(--border);
+}
+
+.log-group.hidden { display: none; }
+
+.log-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.3rem var(--gap);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  /* A method name off the wire can be any length; it wraps rather
+     than widening the panel. */
+  overflow-wrap: anywhere;
+}
+
+/* The group already draws a boundary, so its last row should not add
+   another one. */
+.log-group-rows > .row:last-child {
+  border-bottom: none;
 }
 
 /* ---- Row colour: two independent signals -------------------------------
@@ -326,32 +482,31 @@ h2 {
 /* A handler running, and its return value. Nested inside the exchange
    that asked for them rather than alongside it.
 
-   The nesting is shown by a thicker left edge, NOT by indenting the
-   row. An earlier version used padding-left, which pushed the
-   timestamp right along with everything else — so the clock column
-   zig-zagged down the log and the one thing you scan by stopped being
-   scannable. The edge says the same thing and moves nothing.
+   Indented, matching the chat lab exactly: a call happens inside the
+   exchange that asked for it, and the indent is what says so.
+
+   A previous version here used a 6px left edge instead, to stop the
+   indent pushing the timestamp right and making the clock column
+   zig-zag. That reasoning was sound in isolation, but the chat lab
+   indents and the two panels are meant to read identically — so the
+   indent wins and the zig-zag is accepted. It is the same 0.6rem
+   there, and the time column zig-zags there too.
 
    Call and return share an edge colour and differ in tint, so the
    pair reads as one unit with a beginning and an end. */
 .row.dir-call {
   border-left-color: var(--level-tool);
-  border-left-width: 6px;
   background: color-mix(in srgb, var(--level-tool) 9%, transparent);
+  padding-left: calc(var(--gap) + 0.6rem);
 }
 .dir-call .row-arrow { color: var(--level-tool); }
 
 .row.dir-back {
   border-left-color: var(--level-tool);
-  border-left-width: 6px;
   background: color-mix(in srgb, var(--level-tool) 16%, transparent);
+  padding-left: calc(var(--gap) + 0.6rem);
 }
 .dir-back .row-arrow { color: var(--level-tool); }
-
-/* The extra 3px of stripe comes out of the padding, so a thicker
-   border does not shift the text beside it — the same arithmetic the
-   base rule uses, one step further. */
-.row.dir-call, .row.dir-back { padding-left: calc(var(--gap) - 6px); }
 
 /* Internal notes recede: no tint, faded marker. They are context, not
    part of any exchange. */
@@ -515,11 +670,32 @@ h2 {
 }
 .row-detail > summary {
   cursor: pointer;
-  color: var(--fg-faint);
-  font-size: 0.68rem;
-  list-style-position: outside;
+  color: var(--fg-dim);
+  font-size: 0.72rem;
+  /* The default triangle is tiny and inconsistent between browsers;
+     this replaces it with one drawn below. The chat lab does the
+     same, and the native marker was the most visible remaining
+     difference between the two panels once the colours matched. */
+  list-style: none;
 }
-.row-detail > summary:hover { color: var(--accent); }
+
+/* Safari needs this separately to hide its own marker. */
+.row-detail > summary::-webkit-details-marker {
+  display: none;
+}
+
+.row-detail > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 1em;
+  color: var(--fg-dim);
+}
+
+.row-detail[open] > summary::before {
+  content: "▾";
+}
+
+.row-detail > summary:hover { color: var(--fg); }
 
 /* Failures override the direction tint rather than blending with it.
 
@@ -635,7 +811,52 @@ h2 {
 .jt-number { color: var(--warn); }
 .jt-boolean { color: var(--accent); }
 .jt-null, .jt-other { color: var(--fg-dim); }
-.jt-more, .jt-hidden-rest { color: var(--fg-faint); }
+.jt-hidden-rest { color: var(--fg-faint); }
+
+/* The "show the rest of this string" control.
+ *
+ * A <button>, so it is keyboard-operable and announced as a control —
+ * but a button with no styling gets the browser's default chrome: a
+ * grey fill, a bevelled border and several pixels of padding on every
+ * side. Inline in a line of monospace JSON that reads as a disabled
+ * form control wedged into the text, and the default padding pushes
+ * it into whatever sits beside it.
+ *
+ * This is the chat lab's .jt-more rule, which had already solved it
+ * and was never ported here along with json-tree.ts. Same small sunk
+ * pill, same accent on hover.
+ */
+.jt-more {
+  margin-left: 0.2rem;
+  padding: 0 0.25rem;
+  border: none;
+  border-radius: 3px;
+  background: var(--surface-sunk);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  /* Normal weight and the panel's own line height: a button inherits
+     neither, and the default medium weight made the pill heavier than
+     the string it is attached to. */
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--fg-dim);
+  cursor: pointer;
+  /* Keeps the pill whole when the string it follows wraps, rather
+     than letting "+136" and "chars" land on separate lines. */
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.jt-more:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Focus has to be visible: this is a real control reached by Tab. */
+.jt-more:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 /* jt-root is the node holding the top-level entries, inside the
    .json-tree container styled above; jt-summary is the clickable line
