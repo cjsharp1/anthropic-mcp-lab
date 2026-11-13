@@ -1,0 +1,30 @@
+# ---------------------------------------------------------------------------
+# Line endings.
+#
+# This project is developed on Windows, where editors produce CRLF, but it is
+# meant to be cloned on macOS and Linux too. Without this file, git commits
+# whatever it is handed, and a repository ends up with a mix — which turns a
+# one-line change into a diff that claims the whole file was rewritten.
+#
+# `text=auto` tells git to store every text file with LF in the repository and
+# convert to the platform's native ending on checkout. Windows users still get
+# CRLF in their working copy; the committed form stays consistent.
+# ---------------------------------------------------------------------------
+
+* text=auto
+
+# Explicit for the file types this project actually contains, so the intent is
+# readable rather than inferred.
+*.ts   text
+*.js   text
+*.json text
+*.css  text
+*.html text
+*.md   text
+*.txt  text
+*.svg  text
+
+# Binary: never convert these.
+*.png binary
+*.jpg binary
+*.ico binary

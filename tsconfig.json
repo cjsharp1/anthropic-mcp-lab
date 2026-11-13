@@ -1,0 +1,105 @@
+{
+  // ---------------------------------------------------------------------------
+  // TypeScript configuration for the Anthropic MCP Lab.
+  //
+  // This project has two halves that both compile from here:
+  //   server/  runs in Node        (the MCP server, Express, the observer)
+  //   public/  runs in the browser (the inspector UI and its traffic log)
+  //
+  // Each option below is annotated with what it does and why this project wants
+  // it, so the config itself is part of the teaching material.
+  //
+  // It is deliberately near-identical to the chat lab's. Two projects meant to
+  // be read together should not differ in ways that have no reason behind
+  // them — a reader comparing the files should find only the differences that
+  // mean something.
+  // ---------------------------------------------------------------------------
+  "compilerOptions": {
+    // --- Language and module system ------------------------------------------
+
+    // Which JavaScript version to emit. ES2022 gives us top-level await, which
+    // the Node scripts use, and is supported by every current browser.
+    "target": "ES2022",
+
+    // Which module syntax to emit. "NodeNext" tells TypeScript to follow Node's
+    // own rules, reading "type": "module" from package.json. That is what makes
+    // import/export work in .ts files here instead of require().
+    //
+    // It also matters more here than it did in the chat lab: the MCP packages
+    // ship separate ESM and CJS builds and declare subpath exports
+    // ("@modelcontextprotocol/server/stdio"). NodeNext is what resolves those
+    // subpaths to the right type definitions. "node" or "node16" resolution
+    // would fail to find them.
+    "module": "NodeNext",
+
+    // How to find a file when you write an import. Must pair with the module
+    // setting above; "NodeNext" applies Node's real resolution algorithm.
+    "moduleResolution": "NodeNext",
+
+    // Built-in type definitions to include. ES2022 gives the language APIs, DOM
+    // gives the browser APIs the frontend needs (document, fetch, HTMLElement).
+    //
+    // DOM is also what supplies Request and Response here. The MCP HTTP handler
+    // is built on the web-standard fetch types rather than Node's own http
+    // objects, so the server half references them too.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    // Ambient type packages to load from node_modules/@types. Naming "node"
+    // here brings in process, Buffer and the rest of the Node globals, which
+    // the server/ and scripts/ files rely on.
+    "types": ["node"],
+
+    // --- Type checking strictness --------------------------------------------
+
+    // Turns on the full family of strict checks at once, including
+    // strictNullChecks. This is deliberate for a teaching app: MCP results are
+    // discriminated unions (a content block is text OR image OR resource), and
+    // strict mode forces you to narrow by .type before reading .text. That is
+    // a lesson, not an obstacle — and it is the same lesson the chat lab
+    // teaches about the Anthropic SDK's content blocks, which is worth
+    // noticing: two different protocols, the same shape of problem.
+    "strict": true,
+
+    // Flags variables you declare and never use. Keeps the example code honest.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    // Requires every code path in a function to return a value when any does.
+    "noImplicitReturns": true,
+
+    // Forces array and object index access to be treated as possibly undefined,
+    // so content[0] has to be checked before use.
+    "noUncheckedIndexedAccess": true,
+
+    // --- Interop and output ---------------------------------------------------
+
+    // Allows `import express from "express"` against packages that use the
+    // older CommonJS export style. Without it those imports need awkward syntax.
+    "esModuleInterop": true,
+
+    // Catches imports that differ from the file name only by letter case, which
+    // breaks on Linux even when it works on Windows.
+    "forceConsistentCasingInFileNames": true,
+
+    // Where compiled JavaScript goes, and what the paths inside it are relative
+    // to. rootDir "." keeps the server/ and public/ split intact under dist/.
+    "outDir": "dist",
+    "rootDir": ".",
+
+    // Emit .js.map files so browser DevTools shows you the TypeScript source
+    // rather than the compiled output when you set a breakpoint.
+    "sourceMap": true,
+
+    // Skips type checking inside node_modules. Large dependency type trees are
+    // slow to re-check and are not your code's problem.
+    "skipLibCheck": true
+  },
+
+  // Which files belong to THIS config: the Node half of the app.
+  //
+  // public/ is deliberately absent. The browser half compiles under
+  // tsconfig.client.json instead, which gives it browser settings and emits
+  // app.js beside app.ts. Listing it here as well would compile it twice,
+  // under the wrong settings the second time.
+  "include": ["server/**/*.ts", "scripts/**/*.ts", "shared/**/*.ts"]
+}

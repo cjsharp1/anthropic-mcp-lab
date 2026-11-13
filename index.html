@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anthropic MCP Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: a single reading column. Spec-sheet register — the subject is an
+     instrument panel, so the page borrows its vocabulary: hairline rules,
+     monospace labels, data in aligned rows rather than cards. The one
+     editorial note is the Newsreader display face against plex mono.
+
+     Deliberately the same stylesheet as the chat lab's overview, down to the
+     palette. The two projects are meant to be read as one body of work, and
+     a reader who opens both should see sibling pages, not two designs. The
+     only visual difference is the accent, which shifts from the chat lab's
+     rust to a cooler slate-blue — enough to tell the tabs apart at a glance,
+     not enough to look like a different project. */
+  :root {
+    --bg: #fbfaf8;
+    --surface: #ffffff;
+    --surface-sunk: #f4f2ee;
+    --fg: #1a1815;
+    --fg-dim: #6a635a;
+    --fg-faint: #938b80;
+    --rule: #e0dbd2;
+    --rule-strong: #c8c1b6;
+    --accent: #2f5d78;
+    --accent-soft: #e2ecf2;
+    --good: #4a6b48;
+    --warn: #8a6410;
+
+    --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+    --font-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16150f;
+      --surface: #1e1c17;
+      --surface-sunk: #26231d;
+      --fg: #ece8e0;
+      --fg-dim: #9d958a;
+      --fg-faint: #7a7368;
+      --rule: #35312a;
+      --rule-strong: #4a453c;
+      --accent: #7fb3d1;
+      --accent-soft: #1b2831;
+      --good: #8fb58c;
+      --warn: #d9b45f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16150f;
+    --surface: #1e1c17;
+    --surface-sunk: #26231d;
+    --fg: #ece8e0;
+    --fg-dim: #9d958a;
+    --fg-faint: #7a7368;
+    --rule: #35312a;
+    --rule-strong: #4a453c;
+    --accent: #7fb3d1;
+    --accent-soft: #1b2831;
+    --good: #8fb58c;
+    --warn: #d9b45f;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 6rem;
+  }
+
+  /* ---- Masthead ---- */
+  header.top {
+    padding-block: 3.5rem 2rem;
+    border-bottom: 2px solid var(--fg);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 1rem;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-family: var(--font-display);
+    font-size: clamp(1.05rem, 2.6vw, 1.3rem);
+    line-height: 1.5;
+    color: var(--fg-dim);
+    margin: 1rem 0 0;
+    max-width: 40ch;
+  }
+
+  /* ---- Fact strip ---- */
+  .facts {
+    display: grid;
+    /* Four fixed columns rather than auto-fit. The column COUNT has to be
+       known for the rules below to strip the divider and indent from
+       whichever cell begins each row — auto-fit decides that at render
+       time, and there is no "first in row" selector to match it with.
+       The breakpoints below step it down to 2, then 1. */
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .fact {
+    /* Padding on the LEFT, so the divider to the left of a cell has air
+       between it and the text. Padding on the right instead pushes the
+       text up against the divider it sits beside, which reads as the
+       label belonging to the column on its left. */
+    padding: 1.1rem;
+    /* The divider belongs to the cell it precedes, not the one it
+       follows — that way the strip never ends on a stray line, which
+       is what a right-hand border does when auto-fit reflows the row. */
+    border-left: 1px solid var(--rule);
+    min-width: 0;
+  }
+  /* Whichever cell starts a row loses its divider and its left padding,
+     so its text lines up with the page margin instead of being indented
+     past it. At four columns that is every 4th cell starting from the
+     first; the breakpoints below restate it for 2 columns and for 1. */
+  .fact:nth-child(4n + 1) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .fact dt {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin: 0 0 0.3rem;
+  }
+  .fact dd {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .fact dd small {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--fg-dim);
+    letter-spacing: 0;
+  }
+
+  /* ---- Sections ---- */
+  section { padding-block: 2.75rem 0; }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .sec-note {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin: 0 0 1.4rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    margin: 2rem 0 0.75rem;
+  }
+  p { margin: 0 0 1rem; max-width: 64ch; }
+  p:last-child { margin-bottom: 0; }
+
+  a { color: var(--accent); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--surface-sunk);
+    padding: 0.1em 0.35em;
+    border-radius: 2px;
+  }
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  /* ---- Tables ---- */
+  .t-scroll { overflow-x: auto; margin: 0 0 1rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9rem;
+  }
+  caption {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    padding-bottom: 0.5rem;
+  }
+  th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    border-bottom: 1px solid var(--rule-strong);
+    padding: 0.5rem 0.9rem 0.5rem 0;
+    white-space: nowrap;
+  }
+  td {
+    border-bottom: 1px solid var(--rule);
+    padding: 0.65rem 0.9rem 0.65rem 0;
+    vertical-align: top;
+  }
+  th:last-child, td:last-child { padding-right: 0; }
+  td.mono, .num {
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  td.name { font-weight: 600; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  /* ---- Phase list ---- */
+  ol.phases {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: ph;
+    border-top: 1px solid var(--rule);
+  }
+  ol.phases li {
+    counter-increment: ph;
+    display: grid;
+    grid-template-columns: 2.6rem 1fr auto;
+    gap: 0 1rem;
+    align-items: baseline;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  ol.phases li::before {
+    content: counter(ph, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+  ol.phases .ph-name { font-weight: 500; min-width: 0; }
+  ol.phases .ph-steps {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--fg-faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  /* A phase already finished. The marker carries the state, so the row
+     does not need a second treatment to say the same thing twice. */
+  ol.phases li.done .ph-steps { color: var(--good); }
+
+  /* ---- Callout ---- */
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 0.9rem 1.1rem;
+    margin: 1.25rem 0;
+    font-size: 0.92rem;
+  }
+  .note p { max-width: none; }
+  .note .note-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  /* ---- Gotcha list ---- */
+  ul.plain {
+    margin: 0 0 1rem;
+    padding-left: 1.1rem;
+    max-width: 64ch;
+  }
+  ul.plain li { margin-bottom: 0.5rem; }
+  ul.plain li::marker { color: var(--fg-faint); }
+
+  /* ---- Status row ---- */
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .status li {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    border: 1px solid var(--rule-strong);
+    padding: 0.3rem 0.6rem;
+    border-radius: 2px;
+    color: var(--fg-dim);
+  }
+  .status li.ok {
+    border-color: var(--good);
+    color: var(--good);
+  }
+  .status li.caution {
+    border-color: var(--warn);
+    color: var(--warn);
+  }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--fg);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--fg-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+  }
+
+  /* Two columns: four cells get cramped before the layout is narrow
+     enough to stack, so this is the intermediate step. Cells 1 and 3
+     now begin a row. */
+  @media (max-width: 700px) {
+    .facts { grid-template-columns: repeat(2, 1fr); }
+    .fact {
+      padding-left: 1.1rem;
+      border-left: 1px solid var(--rule);
+    }
+    .fact:nth-child(2n + 1) {
+      padding-left: 0;
+      border-left: 0;
+    }
+    /* The second row needs a rule above it, now that cells sit below
+       each other rather than only beside each other. */
+    .fact:nth-child(n + 3) { border-top: 1px solid var(--rule); }
+  }
+
+  @media (max-width: 480px) {
+    /* Stacked: every cell begins its own row, so none of them carry a
+       divider or an indent. The separator becomes a rule between rows. */
+    .facts { grid-template-columns: 1fr; }
+    .fact {
+      padding-left: 0;
+      border-left: 0;
+      border-top: 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .fact:last-child { border-bottom: 0; }
+    ol.phases li { grid-template-columns: 2.2rem 1fr; }
+    ol.phases .ph-steps { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">Project overview · local teaching tool</p>
+    <h1>Anthropic MCP Lab</h1>
+    <p class="standfirst">An MCP server you can watch — every request in, every response out, over either transport, with the protocol visible on the wire.</p>
+  </header>
+
+  <dl class="facts">
+    <div class="fact">
+      <dt>Status</dt>
+      <dd>Phase 1<small>of 5 — skeleton</small></dd>
+    </div>
+    <div class="fact">
+      <dt>Transports</dt>
+      <dd>2<small>stdio, HTTP</small></dd>
+    </div>
+    <div class="fact">
+      <dt>Primitives</dt>
+      <dd>3<small>tools, resources, prompts</small></dd>
+    </div>
+    <div class="fact">
+      <dt>Port</dt>
+      <dd>3100<small>beside the chat lab</small></dd>
+    </div>
+  </dl>
+
+  <section>
+    <h2>What it is</h2>
+    <p class="sec-note">The premise</p>
+    <p>A Model Context Protocol server with a live inspector beside it. The inspector shows every MCP message in both directions — the actual envelope, not a summary — along with which transport carried it and how long the handler took.</p>
+    <p>It is the companion to the <a href="https://cjsharp1.github.io/anthropic-chat-lab/">Anthropic Chat Lab</a>, and the two are built to run at the same time. The chat lab shows you the <strong>Anthropic API</strong> boundary. This shows you the <strong>MCP</strong> boundary — a second, independent protocol with its own handshake, its own envelope and its own idea of what a tool is.</p>
+    <p>Run both and the full picture is on screen at once: Claude asks the chat lab for a tool, the chat lab asks this server, this server answers, and the answer travels back. Two logs, two protocols, one request.</p>
+
+    <div class="note">
+      <span class="note-label">The distinction the lab exists to make</span>
+      <p>This server <strong>never calls Anthropic and holds no API key.</strong> An MCP server does not talk to a model — it exposes capabilities and waits to be called. The model sits on the far side of the client. "Where does the key live?" is the question that tells you which component talks to the model, and in an MCP setup the answer is never the MCP server.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tech stack</h2>
+    <p class="sec-note">Node · Express · vanilla TypeScript · no frontend framework</p>
+
+    <h3>Runtime dependencies</h3>
+    <div class="t-scroll">
+      <table>
+        <thead>
+          <tr><th>Package</th><th>Version</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">@modelcontextprotocol/server</td><td class="mono">2.4.0</td><td><code>McpServer</code>, <code>registerTool</code>, and the stdio and HTTP serving entry points</td></tr>
+          <tr><td class="name">@modelcontextprotocol/client</td><td class="mono">2.4.0</td><td>The client half, used by the two <code>try-</code> scripts to call this server over both transports</td></tr>
+          <tr><td class="name">@modelcontextprotocol/node</td><td class="mono">2.1.2</td><td><code>toNodeHandler</code> — adapts the web-standard MCP handler onto Express</td></tr>
+          <tr><td class="name">express</td><td class="mono">5.3.0</td><td>Hosts the MCP endpoint, the inspector and its event stream</td></tr>
+          <tr><td class="name">zod</td><td class="mono">4.6.7</td><td>Tool input schemas. MCP takes Zod objects directly</td></tr>
+          <tr><td class="name">dotenv</td><td class="mono">18.0.10</td><td>Loads an optional <code>.env</code> at startup — port only, no secrets</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Build and dev toolchain</h3>
+    <div class="t-scroll">
+      <table>
+        <thead>
+          <tr><th>Package</th><th>Version</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">typescript</td><td class="mono">7.0.2</td><td>Two configs — one per half of the app</td></tr>
+          <tr><td class="name">tsx</td><td class="mono">4.23.15</td><td>Runs TypeScript directly, restarts on save. The normal way to use the app</td></tr>
+          <tr><td class="name">@types/node</td><td class="mono">26.6.6</td><td>Server-side type definitions</td></tr>
+          <tr><td class="name">@types/express</td><td class="mono">5.0.6</td><td>Route and middleware types</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Platform</h3>
+    <div class="t-scroll">
+      <table>
+        <tbody>
+          <tr><td class="name">Node.js</td><td>20 or newer required; developed on <span class="num">24.4.1</span></td></tr>
+          <tr><td class="name">Module system</td><td><code>"type": "module"</code> — ESM throughout, which means <code>.js</code> extensions on imports of <code>.ts</code> files</td></tr>
+          <tr><td class="name">Frontend</td><td>Hand-written TypeScript compiled to ES modules. No React, no bundler, no CSS framework</td></tr>
+          <tr><td class="name">Models</td><td>None. This process never calls one</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The package split that catches people out</h3>
+    <p>MCP's TypeScript SDK moved from a single <code>@modelcontextprotocol/sdk</code> package to separate <code>/server</code> and <code>/client</code> packages at 2.x. Most tutorials still show the 1.x shape, and several of its APIs no longer exist. The notes in this project's files record the differences where they bite; the short version is that HTTP serving is now <code>createMcpHandler()</code> returning a web-standard handler, not a transport object you wire up by hand.</p>
+
+    <h3>Why no framework</h3>
+    <p>The page is the teaching surface. A framework would put its own abstraction between the reader and the JSON on the wire, which is the one thing the app exists to show. That reasoning carries over from the chat lab unchanged — and matters more here, because the MCP envelope is the subject rather than the plumbing.</p>
+  </section>
+
+  <section>
+    <h2>What's planned</h2>
+    <p class="sec-note">Scope — most of it not built yet</p>
+
+    <h3>Three MCP primitives</h3>
+    <div class="t-scroll">
+      <table>
+        <thead>
+          <tr><th>Primitive</th><th>What it is</th><th>Why it is in the lab</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Tools</td><td>Functions a model can call</td><td>The familiar one — and the one that looks most like what the chat lab already does</td></tr>
+          <tr><td class="name">Resources</td><td>Readable data, addressed by URI</td><td>Has no Anthropic-API equivalent. Closer to a file read than a tool call</td></tr>
+          <tr><td class="name">Prompts</td><td>Parameterised templates the server offers</td><td>The server suggesting how it should be used, rather than waiting to be told</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Four tools</h3>
+    <div class="t-scroll">
+      <table>
+        <thead>
+          <tr><th>Tool</th><th>What it teaches</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">echo</td><td>The round trip, with nothing else in the way</td></tr>
+          <tr><td class="name">roll_dice</td><td>Non-determinism — proof the server really ran, rather than the model guessing</td></tr>
+          <tr><td class="name">inspect_request</td><td>Returns the MCP envelope it was called with. The protocol looking at itself</td></tr>
+          <tr><td class="name">slow_task</td><td>Progress notifications: a server speaking before it has an answer</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Two transports, one protocol</h3>
+    <p>The same server is served two ways. <code>stdio</code> is how Claude Desktop launches a local server — a child process talking over its own standard input and output. <strong>Streamable HTTP</strong> is how a remote server works, and is what the chat lab will connect to.</p>
+    <p>Both are built, and <code>npm run try-stdio</code> and <code>npm run try-http</code> run the same session over each. Watching identical traffic arrive down two different pipes is the clearest way to see that the transport is not the protocol.</p>
+
+    <h3>Out of scope, deliberately</h3>
+    <p>Sampling and elicitation — where the server calls <em>back</em> into the client — are not planned. They need client-side support that would complicate the chat lab integration substantially. Their absence is a decision, not an oversight.</p>
+  </section>
+
+  <section>
+    <h2>How it is being built</h2>
+    <p class="sec-note">5 phases · phase 1 complete</p>
+
+    <p>Built in phases from a written plan, the same way the chat lab was. Each phase ends somewhere runnable: phase 2 finishes with a server the MCP Inspector can list tools from, before any of the UI exists.</p>
+
+    <ol class="phases">
+      <li class="done"><span class="ph-name">Skeleton — configs, scripts, conventions</span> <span class="ph-steps">done</span></li>
+      <li><span class="ph-name">The MCP server: tools, resources, prompts, stdio</span> <span class="ph-steps">next</span></li>
+      <li><span class="ph-name">HTTP serving and the inspector UI</span> <span class="ph-steps">planned</span></li>
+      <li><span class="ph-name">Chat lab integration</span> <span class="ph-steps">planned</span></li>
+      <li><span class="ph-name">Documentation and Pages</span> <span class="ph-steps">planned</span></li>
+    </ol>
+
+    <h3>What phase 1 put in place</h3>
+    <p>The two TypeScript configs, the three CLI scripts, the wire contract in <code>shared/types.ts</code>, and the conventions the rest of the build is held to. <code>npm run audit-comments</code> went in <em>first</em>, before any source file, so the documentation rule is enforced from the beginning rather than retrofitted at the end.</p>
+
+    <h3>Gotchas already recorded</h3>
+    <ul class="plain">
+      <li><code>tsc</code> fails with <code>TS18003</code> when an <code>include</code> pattern matches zero files, so the client config broke the typecheck while <code>public/</code> was still empty — on a project where nothing was actually wrong. This page claimed the typecheck passed before anyone had run it. Both are fixed; the claim is now measured.</li>
+      <li>The MCP serving entry points take a <strong>factory</strong>, not a server instance, and call it more than once — including for a discovery probe whose result is discarded. Returning a shared instance is a bug that only shows up under version negotiation.</li>
+      <li><code>@modelcontextprotocol/sdk</code> 1.x is superseded by the <code>/server</code> and <code>/client</code> 2.x packages. Code written against the old single package does not port across by changing the import.</li>
+      <li>Tool input schemas are <strong>Zod objects</strong>, not JSON Schema. The chat lab converts Zod <em>to</em> JSON Schema for the Anthropic API; MCP takes the Zod directly.</li>
+      <li><code>moduleResolution: NodeNext</code> is load-bearing here, not stylistic — it is what resolves the packages' subpath exports to their type definitions.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Conventions held through the build</h2>
+    <p class="sec-note">What the code enforces on itself</p>
+
+    <h3>Every file explains itself</h3>
+    <p>Each file opens with a comment saying what it does and <em>why it exists</em>; <code>npm run audit-comments</code> checks none were missed, and fails the check if a header is missing, does not name its file, or is short enough to be a label rather than an explanation.</p>
+    <p>This project's copy of that script fixes two things about the chat lab's. It audits <code>shared/</code>, which the original never looked at — leaving the wire contract as the one file exempt from the rule. And it drops a stray fragment from a regex that quietly ate two characters from any comment line beginning <code>* ex…</code>. Both fixes are documented in the script's own header, because an unexplained difference between two near-identical files is worse than either version.</p>
+
+    <h3>Dependency order as a rule</h3>
+    <p>Tools follow three levels: <code>types.ts</code> imports nothing, <code>definitions/</code> imports types, <code>registry.ts</code> imports the definitions. The chat lab learned this the hard way — an earlier version put the interface in the registry, creating an import cycle that worked with one tool and threw <code>Cannot access 'currentTime' before initialization</code> with two. Same layout here, for the same reason.</p>
+
+    <h3>Security by construction</h3>
+    <ul class="plain">
+      <li><strong>No API key, ever.</strong> This server never calls Anthropic. A change that needs a key belongs in the chat lab instead.</li>
+      <li>The client <code>tsconfig</code> sets <code>"types": []</code> so server globals cannot be referenced from frontend code — and so the inspector cannot import from <code>server/</code> at all.</li>
+      <li>Everything crossing the MCP boundary is untrusted. Tool descriptions, resource contents and prompt text arrive from a <em>remote server</em>, so they render with <code>textContent</code>, never <code>innerHTML</code>. This matters more here than in the chat lab, where the only untrusted text was model output.</li>
+      <li>Both halves of every exchange are logged. A request with no logged response is a bug in the observer, not a quiet success.</li>
+      <li>No authentication, binds to localhost. Not for a network.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Current state</h2>
+    <p class="sec-note">Verified 12 November 2026</p>
+
+    <ul class="status">
+      <li class="ok">typecheck passes — both halves</li>
+      <li class="ok">build passes</li>
+      <li class="ok">audit-comments passes — 5 files</li>
+      <li class="ok">check-env passes</li>
+      <li class="ok">0 vulnerabilities</li>
+      <li>828 lines of TypeScript</li>
+      <li>3 CLI scripts</li>
+      <li class="caution">no server yet — phase 2</li>
+      <li class="caution">not a git repository</li>
+    </ul>
+
+    <div class="note">
+      <span class="note-label">Read this page as a plan, not a report</span>
+      <p>Phase 1 of 5 is complete: the configs, the scripts and the conventions. <strong>The MCP server itself does not exist yet</strong> — the tools, resources, prompts, transports and inspector described above are specified and not yet built. The figures in the status row are measured; everything in <em>What's planned</em> is intent.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>anthropic-mcp-lab v1.0.0</span>
+    <span>Node 20+ · TypeScript 7 · Express 5 · MCP 2.4</span>
+    <span>Local only · no API key</span>
+  </footer>
+
+</div>
+</body>
+</html>

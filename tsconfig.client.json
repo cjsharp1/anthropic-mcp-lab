@@ -1,0 +1,53 @@
+{
+  // ---------------------------------------------------------------------------
+  // Compiler settings for the BROWSER half of the app (public/).
+  //
+  // Why a second config at all? The two halves of this project run in
+  // different places and need different settings:
+  //
+  //   server/ and scripts/   run in Node   — module NodeNext, Node globals
+  //   public/                runs in a tab — module ES2022, DOM globals
+  //
+  // Trying to serve both from one config means the inspector gets Node's
+  // module rules (including the .js import extension) and the server gets
+  // the DOM, neither of which is right.
+  //
+  // This file inherits the shared settings from tsconfig.json and overrides
+  // only what differs.
+  // ---------------------------------------------------------------------------
+  "extends": "./tsconfig.json",
+
+  "compilerOptions": {
+    // Plain ES modules, the way a browser loads them. NOT NodeNext — the
+    // browser has no node_modules and no .js-extension rule to satisfy.
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+
+    // Browser APIs only. Dropping "node" from the inherited types is what
+    // stops you writing `process.env.PORT` in frontend code and having it
+    // compile — the mistake this separation exists to prevent.
+    //
+    // In this project it also enforces something sharper. The inspector must
+    // never import from server/: not the MCP server, not the tool registry,
+    // not the observer. Everything it knows arrives over the wire as JSON,
+    // described by shared/types.ts. An empty "types" list is one half of what
+    // keeps that boundary honest; the "include" list below is the other.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+
+    // Emit app.js next to app.ts, which is where index.html loads it from.
+    // The server config's dist/ output does not apply here: these files are
+    // served as static assets straight out of public/.
+    "outDir": ".",
+    "rootDir": "."
+  },
+
+  // Only the inspector. The server files are compiled by the root config.
+  "include": ["public/**/*.ts", "shared/**/*.ts"],
+
+  // tsc excludes its own outDir automatically, to avoid recompiling what it
+  // just emitted. Here outDir IS the source folder, so that automatic rule
+  // would exclude app.ts itself and the build would fail with TS18003.
+  // Declaring exclude explicitly replaces the automatic rule.
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,55 @@
+# ---------------------------------------------------------------------------
+# Files that must never reach version control.
+#
+# Unlike the chat lab, this project holds NO API KEY — it never calls
+# Anthropic, so there is no secret to leak here. The .env line below is
+# kept anyway, for two reasons: the habit is worth keeping consistent
+# across both projects, and a reader who copies this file into a project
+# that DOES hold a key should find the protection already in place.
+#
+# A key committed to a repository is a leaked key even if you delete it in
+# a later commit, because the old commit still contains it.
+# ---------------------------------------------------------------------------
+
+# Local configuration — never commit these
+.env
+.env.local
+
+# Installed packages — restore with `npm install` instead
+node_modules/
+
+# Compiled output — regenerate with `npm run build`
+dist/
+*.tsbuildinfo
+
+# The browser half compiles in place, so its output sits in public/ next to
+# the source. Generated, not written by hand — regenerate with
+# `npm run build:client`.
+public/*.js
+public/*.js.map
+
+# shared/ holds types only, so it compiles to an empty module — but the
+# client build still emits one next to the source, same as public/.
+shared/*.js
+shared/*.js.map
+
+# Claude Code
+#
+# CLAUDE.md IS committed — it is project guidance and belongs in the repo.
+# These are the per-developer bits that should not be:
+#   settings.local.json  one person's approved-tool choices
+#   .claude/*            local session state, scratch files, logs
+# A shared .claude/settings.json can be committed by force-adding it
+# (`git add -f`) if the project ever wants team-wide Claude settings.
+.claude/
+.claude/settings.local.json
+
+# Editor and OS clutter
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
