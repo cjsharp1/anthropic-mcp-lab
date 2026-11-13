@@ -50,18 +50,6 @@ export function initSurface(hostEl: HTMLElement): void {
   host = hostEl;
 }
 
-/** The badge text for each kind. */
-function kindLabel(kind: SurfaceEntry["kind"]): string {
-  switch (kind) {
-    case "tool":
-      return "tool";
-    case "resource":
-      return "resource";
-    case "prompt":
-      return "prompt";
-  }
-}
-
 /** Builds one entry's element. */
 function buildEntry(entry: SurfaceEntry): HTMLElement {
   const element = document.createElement("div");
@@ -72,7 +60,7 @@ function buildEntry(entry: SurfaceEntry): HTMLElement {
 
   const badge = document.createElement("span");
   badge.className = `entry-badge badge-${entry.kind}`;
-  badge.textContent = kindLabel(entry.kind);
+  badge.textContent = entry.kind;
   head.append(badge);
 
   const name = document.createElement("span");
@@ -126,7 +114,7 @@ export function renderSurface(surface: SurfaceSnapshot): void {
 
     const heading = document.createElement("h3");
     heading.className = "entry-group";
-    heading.textContent = `${entries.length} ${kindLabel(kind)}${
+    heading.textContent = `${entries.length} ${kind}${
       entries.length === 1 ? "" : "s"
     }`;
     fragments.push(heading);

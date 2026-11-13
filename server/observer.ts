@@ -73,6 +73,24 @@ export type Subscriber = (event: InspectorEvent) => void;
 const REPLAY_LIMIT = 100;
 
 /**
+ * Which JSON-RPC method reaches each primitive.
+ *
+ * This is the table a reader of the inspector most wants: MCP's three
+ * primitives are not three flavours of one call, they are three
+ * methods with different names, and a row saying "a tools/call asked
+ * for it" is naming the actual frame that arrived.
+ *
+ * Keyed by the `kind` the hooks pass, which is exactly these three, so
+ * the lookup is total and a fourth primitive would not compile until
+ * it was added here.
+ */
+const METHOD_FOR_KIND = {
+  tool: "tools/call",
+  resource: "resources/read",
+  prompt: "prompts/get",
+} as const;
+
+/**
  * The tap.
  *
  * Deliberately a class rather than a module of functions with
@@ -172,7 +190,7 @@ export class Observer {
         this.log.handler(`${kind} ${name} running`, { input }, {
           direction: "call",
           transport,
-          because: `a ${kind === "tool" ? "tools/call" : kind === "resource" ? "resources/read" : "prompts/get"} asked for it`,
+          because: `a ${METHOD_FOR_KIND[kind]} asked for it`,
         });
       },
 
