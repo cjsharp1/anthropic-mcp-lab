@@ -409,7 +409,7 @@
   <dl class="facts">
     <div class="fact">
       <dt>Status</dt>
-      <dd>Phase 1<small>of 5 — skeleton</small></dd>
+      <dd>Phase 2<small>of 5 — server runs</small></dd>
     </div>
     <div class="fact">
       <dt>Transports</dt>
@@ -494,8 +494,8 @@
   </section>
 
   <section>
-    <h2>What's planned</h2>
-    <p class="sec-note">Scope — most of it not built yet</p>
+    <h2>What's in it</h2>
+    <p class="sec-note">Built and working, except where noted</p>
 
     <h3>Three MCP primitives</h3>
     <div class="t-scroll">
@@ -526,9 +526,24 @@
       </table>
     </div>
 
+    <h3>Three resources, two prompts</h3>
+    <div class="t-scroll">
+      <table>
+        <thead>
+          <tr><th>Address</th><th>What it shows</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">lab://server-info</td><td>Generated at read time, not stored — read it twice and the uptime has moved</td></tr>
+          <tr><td class="name">lab://notes/protocol</td><td>Backed by a file. The client names an address, never a path, so there is no traversal to defend against</td></tr>
+          <tr><td class="name">lab://dice/{sides}</td><td>A template. The parameter arrives as an unvalidated string, which is where the handler earns its keep</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The two prompts cover the primitive's whole range: <code>try_the_tools</code> returns a single message, and <code>explain_exchange</code> returns three — user, assistant, user — where the middle turn is a worked example the <em>server</em> wrote. That fabricated turn is why prompts return messages rather than text, and it is the same mechanism as prompt injection, differing only in who is doing it.</p>
+
     <h3>Two transports, one protocol</h3>
     <p>The same server is served two ways. <code>stdio</code> is how Claude Desktop launches a local server — a child process talking over its own standard input and output. <strong>Streamable HTTP</strong> is how a remote server works, and is what the chat lab will connect to.</p>
-    <p>Both are built, and <code>npm run try-stdio</code> and <code>npm run try-http</code> run the same session over each. Watching identical traffic arrive down two different pipes is the clearest way to see that the transport is not the protocol.</p>
+    <p>stdio works now; HTTP arrives in phase 3. <code>npm run try-stdio</code> and <code>npm run try-http</code> will then run <em>the same function</em> over each — one shared <code>session.ts</code>, called with two different clients, so any difference in output is a difference in the transport rather than in the script.</p>
 
     <h3>Out of scope, deliberately</h3>
     <p>Sampling and elicitation — where the server calls <em>back</em> into the client — are not planned. They need client-side support that would complicate the chat lab integration substantially. Their absence is a decision, not an oversight.</p>
@@ -542,8 +557,8 @@
 
     <ol class="phases">
       <li class="done"><span class="ph-name">Skeleton — configs, scripts, conventions</span> <span class="ph-steps">done</span></li>
-      <li><span class="ph-name">The MCP server: tools, resources, prompts, stdio</span> <span class="ph-steps">next</span></li>
-      <li><span class="ph-name">HTTP serving and the inspector UI</span> <span class="ph-steps">planned</span></li>
+      <li class="done"><span class="ph-name">The MCP server: tools, resources, prompts, stdio</span> <span class="ph-steps">done</span></li>
+      <li><span class="ph-name">HTTP serving and the inspector UI</span> <span class="ph-steps">next</span></li>
       <li><span class="ph-name">Chat lab integration</span> <span class="ph-steps">planned</span></li>
       <li><span class="ph-name">Documentation and Pages</span> <span class="ph-steps">planned</span></li>
     </ol>
@@ -555,6 +570,8 @@
     <ul class="plain">
       <li><code>tsc</code> fails with <code>TS18003</code> when an <code>include</code> pattern matches zero files, so the client config broke the typecheck while <code>public/</code> was still empty — on a project where nothing was actually wrong. This page claimed the typecheck passed before anyone had run it. Both are fixed; the claim is now measured.</li>
       <li>The MCP serving entry points take a <strong>factory</strong>, not a server instance, and call it more than once — including for a discovery probe whose result is discarded. Returning a shared instance is a bug that only shows up under version negotiation.</li>
+      <li>That factory is called with the SDK's <em>own</em> argument, an <code>McpRequestContext</code>. A <code>createServer(hooks)</code> signature therefore does not fit, and the compiler says so. Had the parameter been typed loosely enough to accept it, every server would have been built with a request context in place of its hooks and the inspector would have been silently inert.</li>
+      <li><code>callTool</code> takes <code>(params, options)</code> — not the <code>(params, schema, options)</code> shape of the lower-level <code>request()</code>. And resource contents are a <code>text</code>-or-<code>blob</code> union, so <code>contents[0].text</code> does not compile.</li>
       <li><code>@modelcontextprotocol/sdk</code> 1.x is superseded by the <code>/server</code> and <code>/client</code> 2.x packages. Code written against the old single package does not port across by changing the import.</li>
       <li>Tool input schemas are <strong>Zod objects</strong>, not JSON Schema. The chat lab converts Zod <em>to</em> JSON Schema for the Anthropic API; MCP takes the Zod directly.</li>
       <li><code>moduleResolution: NodeNext</code> is load-bearing here, not stylistic — it is what resolves the packages' subpath exports to their type definitions.</li>
@@ -589,18 +606,20 @@
     <ul class="status">
       <li class="ok">typecheck passes — both halves</li>
       <li class="ok">build passes</li>
-      <li class="ok">audit-comments passes — 5 files</li>
+      <li class="ok">audit-comments passes — 24 files</li>
       <li class="ok">check-env passes</li>
       <li class="ok">0 vulnerabilities</li>
-      <li>828 lines of TypeScript</li>
-      <li>3 CLI scripts</li>
-      <li class="caution">no server yet — phase 2</li>
-      <li class="caution">not a git repository</li>
+      <li class="ok">serves over stdio</li>
+      <li class="ok">verified against the MCP Inspector</li>
+      <li>3,550 lines of TypeScript</li>
+      <li>4 tools · 3 resources · 2 prompts</li>
+      <li class="caution">no HTTP yet — phase 3</li>
+      <li class="caution">no inspector UI yet — phase 3</li>
     </ul>
 
     <div class="note">
-      <span class="note-label">Read this page as a plan, not a report</span>
-      <p>Phase 1 of 5 is complete: the configs, the scripts and the conventions. <strong>The MCP server itself does not exist yet</strong> — the tools, resources, prompts, transports and inspector described above are specified and not yet built. The figures in the status row are measured; everything in <em>What's planned</em> is intent.</p>
+      <span class="note-label">What is built, and what is not</span>
+      <p>Phases 1 and 2 of 5 are complete. The server runs: all four tools, all three resources and both prompts work, verified against the MCP Inspector and a scripted client session. <strong>What does not exist yet is the HTTP transport and the inspector UI</strong> — so today you can drive this server from Claude Desktop or a stdio client, but you cannot yet watch it in a browser. That is phase 3. Every figure in the status row is measured.</p>
     </div>
   </section>
 
