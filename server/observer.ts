@@ -29,22 +29,25 @@
  * What this does NOT do
  * ---------------------------------------------------------------------------
  *
- * It does not see raw JSON-RPC frames. The SDK owns the transport, and
- * there is no documented hook for "show me every message on the wire".
+ * It does not itself see raw JSON-RPC frames. The SDK owns the
+ * transport and offers no "show me every message on the wire" hook.
  *
- * What it sees instead is everything either side of that: a request
+ * What this object sees is everything either side of that: a request
  * arriving (logged by the Express route before the handler runs), each
  * handler running and returning (logged through the hooks), and the
- * response going back. For a teaching inspector that is the useful
- * decomposition anyway — a reader wants "tools/call → roll_dice took
- * 2ms and returned 28", not a hex dump.
+ * response going back.
  *
- * The honest limit is that a message the SDK rejects before dispatch —
- * a malformed frame, an unknown method — produces a request row and a
- * response row with nothing in between, rather than a row naming the
- * rejection. The project's stated convention is that both halves of
- * every exchange get logged, and that convention is kept: what is
- * missing is detail in the middle, not the pairing.
+ * The frames themselves ARE logged, by envelope.ts, which taps the
+ * HTTP stream in the route rather than asking the SDK for a hook it
+ * does not have. Those rows arrive here through the same log methods
+ * as any other, so nothing in this file knows the difference.
+ *
+ * That closed the limit this comment used to describe: a message the
+ * SDK rejects before dispatch — a malformed frame, an unknown method
+ * — produced a request row and a response row with nothing in
+ * between. It now produces an error row naming the rejection, because
+ * the JSON-RPC error travels in the response body where the tap can
+ * see it, even though the HTTP status is 200.
  */
 
 import type { InspectorEvent, SurfaceSnapshot } from "../shared/types.js";

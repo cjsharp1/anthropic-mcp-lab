@@ -53,6 +53,10 @@ import {
   toNodeHandler,
 } from "@modelcontextprotocol/node";
 import type { InspectorStreamEvent, SurfaceSnapshot } from "../shared/types.js";
+import {
+  observeRequestEnvelope,
+  observeResponseEnvelope,
+} from "./envelope.js";
 import { Observer } from "./observer.js";
 import {
   SERVER_NAME,
@@ -190,6 +194,32 @@ app.all("/mcp", (req, res) => {
       "mcp-protocol-version": req.headers["mcp-protocol-version"],
     },
   }, { direction: "in", transport: "http" });
+
+  // --- The JSON-RPC envelope, in both directions --------------------------
+  //
+  // The rows above and below are the HTTP envelope: method, a few
+  // headers, a status code. They say an exchange happened and how long
+  // it took, but not what was actually said — and what was said is the
+  // protocol, which is the thing this app exists to show. A reader
+  // watching "POST /mcp → 200" learns nothing that curl would not tell
+  // them.
+  //
+  // The observer's own header explains why this was missing: the SDK
+  // owns the transport and offers no "show me every frame" hook. True,
+  // but the frames still pass through this route on their way in and
+  // out, and a tap is possible without taking the body away from the
+  // adapter that needs it.
+  //
+  // READING THE REQUEST WITHOUT CONSUMING IT
+  //
+  // This route is mounted before express.json() precisely because the
+  // adapter reads the raw stream itself, and a parser that has already
+  // drained it leaves the adapter hanging on an empty body. So this
+  // listens rather than reads: a "data" handler copies each chunk as
+  // it passes, and the stream still arrives at the adapter intact.
+  // Nothing is awaited and nothing is paused.
+  observeRequestEnvelope(req, observer);
+  observeResponseEnvelope(req, res, observer);
 
   // The "out" half of the pairing.
   //
