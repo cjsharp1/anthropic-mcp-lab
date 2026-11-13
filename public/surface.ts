@@ -37,16 +37,17 @@ import { buildJsonTree } from "./json-tree.js";
 /** Where the panel draws itself. */
 let host: HTMLElement | null = null;
 
-/** The server name and version in the panel's header. */
-let identity: HTMLElement | null = null;
-
-/** Wires the module to its elements. Called once, by app.ts. */
-export function initSurface(
-  hostEl: HTMLElement,
-  identityEl: HTMLElement,
-): void {
+/**
+ * Wires the module to its element. Called once, by app.ts.
+ *
+ * This used to take a second element as well, for a chip in the
+ * header that showed the server's name and version. The header
+ * already says "MCP Lab", and the name and version are in the
+ * overview page and the README — so the chip repeated what the
+ * reader knew in the one place with least room for it.
+ */
+export function initSurface(hostEl: HTMLElement): void {
   host = hostEl;
-  identity = identityEl;
 }
 
 /** The badge text for each kind. */
@@ -114,10 +115,6 @@ function buildEntry(entry: SurfaceEntry): HTMLElement {
  * leave a stale node behind the way an incremental update can.
  */
 export function renderSurface(surface: SurfaceSnapshot): void {
-  if (identity) {
-    identity.textContent = `${surface.serverName} ${surface.serverVersion}`;
-  }
-
   if (!host) return;
 
   const groups: Array<SurfaceEntry["kind"]> = ["tool", "resource", "prompt"];

@@ -26,7 +26,6 @@
 <header class="top">
   <div class="title">
     <h1>MCP Lab</h1>
-    <span id="server-identity" class="identity">connecting…</span>
   </div>
 
   <div class="status">
@@ -39,9 +38,15 @@
 
   <section class="pane pane-log">
     <div class="pane-head">
-      <h2>Traffic</h2>
-      <span id="log-count" class="count">0 events</span>
-      <button id="clear" type="button" class="clear">Clear</button>
+      <!-- Sentence case and a pill badge, matching the chat lab's
+           "Activity log" header. The count is just the number there:
+           the title beside it already says what is being counted, so
+           "37 events" repeated the word on every update. -->
+      <h2 class="pane-title">
+        Traffic log
+        <span id="log-count" class="tab-badge">0</span>
+      </h2>
+      <button id="clear" type="button" class="link-button">Clear</button>
     </div>
 
     <div class="filters">
@@ -60,7 +65,7 @@
 
   <section class="pane pane-surface">
     <div class="pane-head">
-      <h2>What this server exposes</h2>
+      <h2 class="pane-title">What this server exposes</h2>
     </div>
 
     <div class="hint">

@@ -86,7 +86,12 @@ function buildFilter(
     applyFilters();
   });
 
+  // The name carries its own class so the stylesheet can tint it with
+  // the level's colour, which makes the filter row double as a legend
+  // for the stripes down the panel. The chat lab does the same with
+  // .log-filter-name.
   const text = document.createElement("span");
+  text.className = "filter-name";
   text.textContent = value === "none" ? "internal" : value;
 
   label.append(box, text);
@@ -102,7 +107,7 @@ function setConnected(connected: boolean, indicator: HTMLElement): void {
 
 function main(): void {
   initLog(need("log"), need("log-count"));
-  initSurface(need("surface"), need("server-identity"));
+  initSurface(need("surface"));
 
   // --- Filters -------------------------------------------------------------
 
