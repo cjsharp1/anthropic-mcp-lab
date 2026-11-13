@@ -24,15 +24,9 @@ anything.
 
 ---
 
-> ## Status: complete
->
-> All five phases are done. The server runs over both transports, the
-> inspector shows every exchange live, and the chat lab borrows these
-> tools over MCP.
->
-> It is built to be read and watched, not deployed: no authentication,
-> binds to localhost, and it executes tools for anyone who can reach
-> it.
+> **Not for deployment.** This server is built to be read and watched:
+> it has no authentication, binds to localhost, and executes tools for
+> anyone who can reach it.
 
 ---
 
