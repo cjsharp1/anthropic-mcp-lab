@@ -295,23 +295,34 @@ h2 {
 }
 .dir-out .row-arrow { color: var(--level-info); }
 
-/* A handler running. Indented, because it happens inside the exchange
-   that asked for it rather than alongside it. */
+/* A handler running, and its return value. Nested inside the exchange
+   that asked for them rather than alongside it.
+
+   The nesting is shown by a thicker left edge, NOT by indenting the
+   row. An earlier version used padding-left, which pushed the
+   timestamp right along with everything else — so the clock column
+   zig-zagged down the log and the one thing you scan by stopped being
+   scannable. The edge says the same thing and moves nothing.
+
+   Call and return share an edge colour and differ in tint, so the
+   pair reads as one unit with a beginning and an end. */
 .row.dir-call {
   border-left-color: var(--level-tool);
+  border-left-width: 6px;
   background: color-mix(in srgb, var(--level-tool) 9%, transparent);
-  padding-left: 1.6rem;
 }
 .dir-call .row-arrow { color: var(--level-tool); }
 
-/* Its return value. Indented to match, slightly stronger so the pair
-   reads as call-then-return. */
 .row.dir-back {
   border-left-color: var(--level-tool);
+  border-left-width: 6px;
   background: color-mix(in srgb, var(--level-tool) 16%, transparent);
-  padding-left: 1.6rem;
 }
 .dir-back .row-arrow { color: var(--level-tool); }
+
+/* The 3px the other rows carry is made up with padding here, so a
+   thicker edge does not shift the text beside it. */
+.row.dir-call, .row.dir-back { padding-left: calc(1rem - 3px); }
 
 /* Internal notes recede: no tint, faded marker. They are context, not
    part of any exchange. */
@@ -320,16 +331,39 @@ h2 {
 }
 .dir-none .row-arrow { color: var(--fg-dim); opacity: 0.5; }
 
+/* The head is a COLUMN LAYOUT, not a row of things pushed together.
+
+   Flex with auto-sized items was the first version and it did not
+   work: HANDLER is wider than MCP, so every tag ended a different
+   distance from the left and no two labels began in the same place.
+   Add the transport pill, which is absent on internal rows, and the
+   columns moved again.
+
+   Grid with fixed track widths fixes both. Every row has the same
+   five columns whether or not it fills them, so the labels form a
+   column and the eye can run down it. The widths are sized to the
+   longest value each column can hold — "HANDLER" for the tag, "stdio"
+   for the transport — rather than guessed. */
 .row-head {
-  display: flex;
+  display: grid;
+  grid-template-columns:
+    [time] 4.2rem
+    [tag] 4.6rem
+    [transport] 2.9rem
+    [arrow] 0.9rem
+    [label] 1fr
+    [elapsed] auto;
   align-items: baseline;
-  gap: 0.55rem;
+  column-gap: 0.45rem;
 }
 
-.row-time { color: var(--fg-faint); flex: none; }
+.row-time { color: var(--fg-faint); }
 
+/* Centred in its track and inline-block so the border hugs the text
+   rather than stretching across the whole column — a full-width
+   bordered box would read as a button. */
 .row-tag {
-  flex: none;
+  justify-self: start;
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -337,6 +371,7 @@ h2 {
   border-radius: 2px;
   border: 1px solid currentColor;
   opacity: 0.85;
+  white-space: nowrap;
 }
 /* Level: the secondary signal, carried by the tag alone.
 
@@ -350,33 +385,61 @@ h2 {
 .tag-warn    { color: var(--level-warn); }
 .tag-error   { color: var(--level-error); }
 
+/* Explicitly placed in its own track. The transport pill is absent on
+   internal rows, and without this the arrow would slide left into the
+   gap on those rows while every other row kept it one column further
+   right. */
 .row-transport {
-  flex: none;
+  grid-column: transport;
+  justify-self: start;
   font-size: 0.62rem;
   color: var(--fg-faint);
   background: var(--surface-sunk);
   padding: 0 0.3rem;
   border-radius: 2px;
+  white-space: nowrap;
 }
 
-.row-arrow { flex: none; color: var(--fg-faint); }
+.row-arrow {
+  grid-column: arrow;
+  color: var(--fg-faint);
+  text-align: center;
+}
 
 /* The label takes the remaining width and wraps rather than being
    clipped. A truncated label in a teaching panel hides exactly the
-   part that explains the row. */
-.row-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+   part that explains the row.
 
-.row-elapsed { flex: none; color: var(--fg-faint); }
+   Placed explicitly for the same reason as the transport pill: on a
+   row with no transport it would otherwise start one column early. */
+.row-label {
+  grid-column: label;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
-/* Indented to the width of the time column, so the note lines up
-   under the label rather than under the clock. */
+.row-elapsed { grid-column: elapsed; color: var(--fg-faint); }
+
+/* Lined up under the LABEL, not under the clock.
+
+   The offset is the sum of the four tracks before the label plus the
+   four gaps between them — written as the arithmetic rather than as a
+   magic number, so that changing a track width above does not
+   silently leave these two lines misaligned.
+
+     4.2 + 4.6 + 2.9 + 0.9  tracks
+     4 × 0.45               gaps                                      */
+.row-note,
+.row-detail {
+  margin-left: calc(4.2rem + 4.6rem + 2.9rem + 0.9rem + (4 * 0.45rem));
+}
+
 .row-note {
-  margin-left: 4.6rem;
   color: var(--fg-faint);
   font-size: 0.68rem;
 }
 
-.row-detail { margin: 0.2rem 0 0.1rem 4.6rem; }
+.row-detail { margin-top: 0.2rem; margin-bottom: 0.1rem; }
 .row-detail > summary {
   cursor: pointer;
   color: var(--fg-faint);
