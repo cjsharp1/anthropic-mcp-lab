@@ -9,10 +9,10 @@
  * The chat lab makes the same move and it pays off the same way. Its
  * patterns log into a function that writes Server-Sent Events, and none
  * of them had to change when the log panel was rewritten. Here the
- * payoff is sharper, because this server genuinely runs with no
- * inspector attached: over stdio there is no browser, no SSE and
- * nowhere to send anything. Every log call still works, and goes
- * nowhere.
+ * payoff is that the inspector is optional: `index.ts` builds a logger
+ * whose sink feeds the observer, and `stdio.ts` builds none at all,
+ * because nothing over there is watching and stdout belongs to the
+ * protocol.
  *
  * ---------------------------------------------------------------------------
  * What a Logger is
@@ -20,8 +20,8 @@
  *
  * A set of small functions, one per level, each building an
  * `InspectorEvent` and handing it to a sink. The sink is supplied at
- * construction — `makeLogger(fn)` — so the same code serves a live
- * browser connection and a silent stdio process.
+ * construction — `makeLogger(fn)` — so the code that logs never learns
+ * where its events end up.
  *
  * The methods take their fields in a deliberate order: the label
  * first, because it is the only required one, then the detail, then
@@ -37,10 +37,8 @@
  */
 
 import type {
-  InspectorDirection,
   InspectorEvent,
   InspectorLevel,
-  McpTransport,
 } from "../shared/types.js";
 
 /**
@@ -110,20 +108,6 @@ export function makeLogger(sink: LogSink): Logger {
 }
 
 /**
- * A logger that discards everything.
- *
- * For the stdio path, which has no inspector attached and must not
- * write to stdout under any circumstances — see the rule at the top of
- * server/stdio.ts.
- *
- * A no-op object rather than making the logger optional everywhere. A
- * nullable logger means `log?.info(...)` at every call site and one
- * forgotten `?` away from a crash; a silent logger means the calls are
- * unconditional and the silence is configuration.
- */
-export const silentLogger: Logger = makeLogger(() => {});
-
-/**
  * Shortens text for a log label.
  *
  * The full value always goes in the event's detail, so nothing is lost
@@ -134,37 +118,4 @@ export const silentLogger: Logger = makeLogger(() => {});
 export function truncate(text: string, max: number): string {
   const oneLine = text.replace(/\s+/g, " ").trim();
   return oneLine.length <= max ? oneLine : `${oneLine.slice(0, max)}…`;
-}
-
-/**
- * Describes a direction in words, for a label.
- *
- * The inspector draws an arrow from the `direction` field, but a label
- * read on its own — in a terminal, in a copied row — needs the word.
- */
-export function directionWord(direction: InspectorDirection): string {
-  switch (direction) {
-    case "in":
-      return "received";
-    case "out":
-      return "sent";
-    case "call":
-      return "calling";
-    case "back":
-      return "returned";
-    case "none":
-      return "";
-  }
-}
-
-/** Names a transport for a label. Exhaustive, so a new one must be handled. */
-export function transportWord(transport: McpTransport): string {
-  switch (transport) {
-    case "stdio":
-      return "stdio";
-    case "http":
-      return "HTTP";
-    case "none":
-      return "internal";
-  }
 }

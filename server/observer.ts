@@ -137,11 +137,6 @@ export class Observer {
     };
   }
 
-  /** How many inspectors are watching. For the startup log and tests. */
-  get watcherCount(): number {
-    return this.subscribers.size;
-  }
-
   /**
    * Sends one event to every subscriber, and remembers it.
    *

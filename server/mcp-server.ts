@@ -59,6 +59,7 @@
  */
 
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
+import { truncate } from "./logger.js";
 import {
   PROMPTS,
   assertUniquePromptNames,
@@ -118,19 +119,6 @@ export interface HandlerHooks {
     name: string,
     outcome: { ok: boolean; summary: string; elapsedMs: number },
   ): void;
-}
-
-/**
- * Shortens text for a log label.
- *
- * The full value always goes in the event's detail, so nothing is lost
- * — this only keeps the one-line summary scannable. A resource
- * returning 10KB of Markdown would otherwise produce a log row taller
- * than the panel.
- */
-function truncate(text: string, max: number): string {
-  const oneLine = text.replace(/\s+/g, " ").trim();
-  return oneLine.length <= max ? oneLine : `${oneLine.slice(0, max)}…`;
 }
 
 /**

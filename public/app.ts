@@ -100,7 +100,6 @@ function buildFilter(
 
 /** Reflects the connection state in the header. */
 function setConnected(connected: boolean, indicator: HTMLElement): void {
-  state.connected = connected;
   indicator.classList.toggle("on", connected);
   indicator.textContent = connected ? "live" : "reconnecting…";
 }

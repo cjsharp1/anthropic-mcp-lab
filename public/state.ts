@@ -74,15 +74,4 @@ export const state = {
    * return to the bottom.
    */
   follow: true,
-
-  // --- The connection ------------------------------------------------------
-
-  /**
-   * Whether the event stream is currently connected.
-   *
-   * Shown in the header. An inspector that has silently lost its
-   * stream looks identical to a server with no traffic, and the
-   * difference matters enough to put on screen.
-   */
-  connected: false,
 };
