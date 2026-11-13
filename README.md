@@ -24,18 +24,15 @@ anything.
 
 ---
 
-> ## Status: phase 3 of 5
+> ## Status: complete
 >
-> **The server runs over both transports and the inspector is live.**
-> Start it with `npm run dev` and open <http://localhost:3100>.
+> All five phases are done. The server runs over both transports, the
+> inspector shows every exchange live, and the chat lab borrows these
+> tools over MCP.
 >
-> What works: all four tools, three resources and two prompts, over
-> stdio and Streamable HTTP, with every exchange visible in the
-> inspector.
->
-> What does not exist yet: the chat lab integration — teaching
-> `anthropic-chat-lab` to connect to this server so its tools appear
-> beside the local ones. That is phase 4, specified in `PLAN.md`.
+> It is built to be read and watched, not deployed: no authentication,
+> binds to localhost, and it executes tools for anyone who can reach
+> it.
 
 ---
 
@@ -115,18 +112,66 @@ either project.
 
 ---
 
+## Using both labs together
+
+This is the configuration the two projects are built for.
+
+| Where | Command | Opens |
+|---|---|---|
+| `anthropic-mcp-lab` | `npm run dev` | <http://localhost:3100> — the inspector |
+| `anthropic-chat-lab` | `npm run dev` | <http://localhost:3000> — the chat window |
+
+In the chat lab, open **Settings → Tools**, scroll to *Connect an MCP
+server*, and connect to `http://localhost:3100/mcp`. The four tools
+here appear in its Tools tab badged `mcp`, ticked and sent exactly
+like its own.
+
+Then ask it to roll some dice, with both activity logs visible. The
+same exchange shows up twice, from two sides:
+
+| In the chat lab | In this inspector |
+|---|---|
+| A request to Anthropic carrying the tool definitions | nothing — this server is not involved yet |
+| `stop_reason: "tool_use"` asking for `roll_dice` | nothing — the model has only asked |
+| A tool row tagged `mcp` | `POST /mcp` arriving, the handler running, the response leaving |
+| A second request carrying the `tool_result` | nothing — this server's part is over |
+
+**Claude is never told where a tool runs.** It receives one `tools`
+array and answers with one `tool_use` block; the chat lab's own tools,
+Anthropic's `web_search` and these MCP tools are indistinguishable in
+the request. Which machine executed the function is the chat lab's
+problem alone — and watching both logs is what makes that concrete.
+
+### Over stdio instead
+
+The chat lab can also launch this server as a child process. In its
+Settings, switch the transport to **stdio** and give it:
+
+```
+npx tsx ../anthropic-mcp-lab/server/stdio.ts
+```
+
+Everything works identically — but **the traffic does not appear in
+this inspector**, because a stdio server belongs to whoever launched
+it. The chat lab gets its own private copy of this server, and the one
+behind the web page never sees those calls. That is a property of the
+transport, not a limitation of the lab, and running it both ways is
+the clearest demonstration of the difference.
+
+---
+
 ## Scripts
 
-| Script | What it does | Works now |
-|---|---|---|
-| `npm run typecheck` | **Both** halves — server and client | yes |
-| `npm run build` | Compile both halves into `dist/` | yes |
-| `npm run audit-comments` | Verify every file has a header | yes |
-| `npm run check-env` | Inspect `.env` — the port, and a key that should not be there | yes |
-| `npm run dev` | Start the inspector on port 3100, restart on save | yes |
-| `npm run stdio` | Serve over stdio, for Claude Desktop and the MCP Inspector | yes |
-| `npm run try-stdio` | Connect as a client over stdio: list and call a tool | yes |
-| `npm run try-http` | The same session over HTTP, to compare | yes |
+| Script | What it does |
+|---|---|
+| `npm run typecheck` | **Both** halves — server and client |
+| `npm run build` | Compile both halves into `dist/` |
+| `npm run audit-comments` | Verify every file has a header |
+| `npm run check-env` | Inspect `.env` — the port, and a key that should not be there |
+| `npm run dev` | Start the inspector on port 3100, restart on save |
+| `npm run stdio` | Serve over stdio, for Claude Desktop and the MCP Inspector |
+| `npm run try-stdio` | Connect as a client over stdio: list and call a tool |
+| `npm run try-http` | The same session over HTTP, to compare |
 
 ---
 
